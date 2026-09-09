@@ -10,6 +10,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ZYGOS — Gestión de Usuarios</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 :root{
   --bg:#0A0D1A;--bg2:#0F1425;--bg3:#141829;--bg4:#1A1F35;
@@ -205,9 +206,11 @@ table.dt{width:100%;border-collapse:collapse;}
   .page-header{flex-direction:column;gap:10px;}
   .page-header .btn{width:100%;}
   .page-title{font-size:20px;}
-  .dt th:nth-child(3),.dt td:nth-child(3),
-  .dt th:nth-child(5),.dt td:nth-child(5),
-  .dt th:nth-child(6),.dt td:nth-child(6){display:none;}
+  #tbl-rendimiento th:nth-child(3),#tbl-rendimiento td:nth-child(3),
+  #tbl-rendimiento th:nth-child(5),#tbl-rendimiento td:nth-child(5),
+  #tbl-rendimiento th:nth-child(6),#tbl-rendimiento td:nth-child(6),
+  #tbl-usuarios th:nth-child(4),#tbl-usuarios td:nth-child(4),
+  #tbl-usuarios th:nth-child(5),#tbl-usuarios td:nth-child(5){display:none;}
   .modal{border-radius:10px;}
   .modal-body{padding:16px;}
   .perms-grid{grid-template-columns:1fr!important;}
@@ -236,17 +239,10 @@ table.dt{width:100%;border-collapse:collapse;}
     </div>
     <div class="login-title">ZYGOS CRM</div>
     <div class="login-sub">Ingresa tus credenciales para continuar</div>
-    <input class="login-input" id="login-user" placeholder="Usuario" onkeydown="if(event.key==='Enter')doLogin()"/>
-    <input class="login-input" id="login-pass" type="password" placeholder="Contraseña" onkeydown="if(event.key==='Enter')doLogin()"/>
+    <input class="login-input" id="login-user" type="email" autocomplete="username" placeholder="Correo electrónico" onkeydown="if(event.key==='Enter')doLogin()"/>
+    <input class="login-input" id="login-pass" type="password" autocomplete="current-password" placeholder="Contraseña" onkeydown="if(event.key==='Enter')doLogin()"/>
     <div class="login-error" id="login-error"></div>
-    <button class="login-btn" onclick="doLogin()">Ingresar →</button>
-    <div class="login-hint">
-      <div class="login-hint-title">Usuarios de acceso</div>
-      <div class="login-hint-item">admin / zygos2026 <span>Admin</span></div>
-      <div class="login-hint-item">jorge / ventas123 <span>Vendedor</span></div>
-      <div class="login-hint-item">matias / tecnico123 <span>Técnico</span></div>
-      <div class="login-hint-item">cliente / ver2026 <span>Cliente (solo lectura)</span></div>
-    </div>
+    <button class="login-btn" id="login-btn" onclick="doLogin()">Ingresar →</button>
   </div>
 </div>
 
@@ -260,27 +256,28 @@ table.dt{width:100%;border-collapse:collapse;}
   <div class="modal-body">
     <div class="form-grid">
       <div class="fg"><label class="fl">Nombre *</label><input class="fi" id="mu-nombre" placeholder="Jorge Sierra"/></div>
-      <div class="fg"><label class="fl">Usuario *</label><input class="fi" id="mu-username" placeholder="jorge"/></div>
+      <div class="fg"><label class="fl">Email *</label><input class="fi" type="email" id="mu-email" placeholder="jorge@zygos.cl"/></div>
     </div>
     <div class="form-grid">
-      <div class="fg"><label class="fl">Email</label><input class="fi" id="mu-email" placeholder="jorge@zygos.cl"/></div>
-      <div class="fg"><label class="fl">Contraseña *</label><input class="fi" id="mu-pass" type="password" placeholder="min. 6 caracteres"/></div>
-    </div>
-    <div class="form-grid">
-      <div class="fg"><label class="fl">Rol *</label>
-        <select class="fi fi-select" id="mu-rol" onchange="updatePermsByRole(this.value)">
+      <div class="fg" id="mu-pass-fg"><label class="fl">Contraseña *</label><input class="fi" type="password" id="mu-pass" placeholder="mín. 6 caracteres"/></div>
+      <div class="fg" id="mu-rol-fg" style="display:none;">
+        <label class="fl">Rol *</label>
+        <select class="fi fi-select" id="mu-rol">
           <option value="admin">👑 Administrador</option>
           <option value="vendor">💼 Vendedor</option>
           <option value="tecnico">🔧 Técnico</option>
           <option value="cliente">👁️ Cliente (solo lectura)</option>
         </select>
       </div>
-      <div class="fg"><label class="fl">Teléfono</label><input class="fi" id="mu-phone" placeholder="+56 9 XXXX XXXX"/></div>
     </div>
-    <div class="fg" style="margin-bottom:14px;"><label class="fl">Notas / Cargo</label><input class="fi" id="mu-cargo" placeholder="Ej: CEO, Ejecutivo de ventas..."/></div>
-    <!-- Permisos detallados -->
-    <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--ink3);margin-bottom:10px;">Permisos del usuario</div>
-    <div class="perms-grid" id="perms-grid"></div>
+    <div class="form-grid">
+      <div class="fg"><label class="fl">Teléfono</label><input class="fi" id="mu-phone" placeholder="+56 9 XXXX XXXX"/></div>
+      <div class="fg"><label class="fl">Cargo</label><input class="fi" id="mu-cargo" placeholder="Ej: CEO, Ejecutivo de ventas..."/></div>
+    </div>
+    <div id="mu-create-note" style="font-size:11px;color:var(--ink3);background:var(--bg3);border-radius:8px;padding:10px 12px;margin-bottom:12px;">
+      ℹ️ La cuenta se crea con rol <strong>Vendedor</strong>. Puedes cambiarlo después editando al usuario en esta misma lista.
+    </div>
+    <label class="perm-check" id="mu-activo-chk" style="display:none;justify-content:center;" onclick="toggleFormFlag('mu-activo-chk')"><span>✓ Cuenta activa</span></label>
   </div>
   <div class="modal-footer">
     <button class="btn btn-ghost" onclick="closeModal('modal-user')">Cancelar</button>
@@ -333,6 +330,75 @@ table.dt{width:100%;border-collapse:collapse;}
 </div>
 </div>
 
+<!-- ═══ MODAL PRODUCTO ═══ -->
+<div class="modal-overlay" id="modal-product" onclick="if(event.target===this)closeModal('modal-product')">
+<div class="modal">
+  <div class="modal-header">
+    <div class="modal-title" id="mp-title">Nuevo Producto</div>
+    <button class="close-btn" onclick="closeModal('modal-product')">✕</button>
+  </div>
+  <div class="modal-body">
+    <div class="form-grid">
+      <div class="fg"><label class="fl">Nombre *</label><input class="fi" id="mp-nombre" placeholder="Torniquete tripode"/></div>
+      <div class="fg"><label class="fl">SKU</label><input class="fi" id="mp-sku" placeholder="TRP-001"/></div>
+    </div>
+    <div class="form-grid">
+      <div class="fg"><label class="fl">Categoría *</label>
+        <select class="fi fi-select" id="mp-categoria">
+          <option value="fitness">🏋️ Fitness</option>
+          <option value="edificio">🏢 Edificio</option>
+          <option value="software">💻 Software</option>
+          <option value="otro">📦 Otro</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Ícono</label><input class="fi" id="mp-icono" placeholder="🔐" maxlength="4"/></div>
+    </div>
+    <div class="form-grid">
+      <div class="fg"><label class="fl">Precio (CLP) *</label><input class="fi" type="number" min="0" id="mp-precio" placeholder="150000"/></div>
+      <div class="fg"><label class="fl">Unidad</label><input class="fi" id="mp-unidad" placeholder="unidad"/></div>
+    </div>
+    <div class="fg" style="margin-bottom:14px;"><label class="fl">Descripción</label><textarea class="fi" id="mp-desc" rows="2" placeholder="Detalle del producto..."></textarea></div>
+    <div class="form-grid">
+      <div class="fg"><label class="fl">Orden</label><input class="fi" type="number" id="mp-orden" placeholder="0"/></div>
+      <div class="fg" style="display:flex;gap:8px;align-items:flex-end;">
+        <label class="perm-check" id="mp-activo-chk" onclick="toggleFormFlag('mp-activo-chk')" style="flex:1;justify-content:center;"><span>✓ Activo</span></label>
+        <label class="perm-check" id="mp-destacado-chk" onclick="toggleFormFlag('mp-destacado-chk')" style="flex:1;justify-content:center;"><span>★ Destacado</span></label>
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-ghost" onclick="closeModal('modal-product')">Cancelar</button>
+    <button class="btn btn-primary" onclick="saveProduct()">Guardar Producto</button>
+  </div>
+</div>
+</div>
+
+<!-- ═══ MODAL SERVICIO ═══ -->
+<div class="modal-overlay" id="modal-service" onclick="if(event.target===this)closeModal('modal-service')">
+<div class="modal">
+  <div class="modal-header">
+    <div class="modal-title" id="ms-title">Nuevo Servicio</div>
+    <button class="close-btn" onclick="closeModal('modal-service')">✕</button>
+  </div>
+  <div class="modal-body">
+    <div class="form-grid">
+      <div class="fg"><label class="fl">Nombre *</label><input class="fi" id="ms-nombre" placeholder="Instalación y configuración"/></div>
+      <div class="fg"><label class="fl">Ícono</label><input class="fi" id="ms-icono" placeholder="🔧" maxlength="4"/></div>
+    </div>
+    <div class="form-grid">
+      <div class="fg"><label class="fl">Precio (CLP)</label><input class="fi" type="number" min="0" id="ms-precio" placeholder="0"/></div>
+      <div class="fg"><label class="fl">Orden</label><input class="fi" type="number" id="ms-orden" placeholder="0"/></div>
+    </div>
+    <div class="fg" style="margin-bottom:14px;"><label class="fl">Descripción</label><textarea class="fi" id="ms-desc" rows="2" placeholder="Detalle del servicio..."></textarea></div>
+    <label class="perm-check" id="ms-activo-chk" onclick="toggleFormFlag('ms-activo-chk')" style="justify-content:center;"><span>✓ Activo</span></label>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-ghost" onclick="closeModal('modal-service')">Cancelar</button>
+    <button class="btn btn-primary" onclick="saveService()">Guardar Servicio</button>
+  </div>
+</div>
+</div>
+
 <!-- ═══ SHELL ═══ -->
 <div class="shell" id="app-shell" style="display:none;">
 
@@ -353,6 +419,7 @@ table.dt{width:100%;border-collapse:collapse;}
   <div class="nav-section">
     <div class="nav-label">Principal</div>
     <div class="nav-item active" id="nav-usuarios" onclick="showView('usuarios')"><span class="nav-icon">👥</span>Usuarios</div>
+    <div class="nav-item" id="nav-catalogo" onclick="showView('catalogo')"><span class="nav-icon">🛒</span>Catálogo</div>
     <div class="nav-item" id="nav-tareas" onclick="showView('tareas')"><span class="nav-icon">✅</span>Tareas<span id="nb-tareas" style="margin-left:auto;background:var(--blue);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:100px;">0</span></div>
     <div class="nav-item" id="nav-rendimiento" onclick="showView('rendimiento')"><span class="nav-icon">📊</span>Rendimiento</div>
     <div class="nav-item" id="nav-roles" onclick="showView('roles')"><span class="nav-icon">🔐</span>Roles y Permisos</div>
@@ -389,12 +456,45 @@ table.dt{width:100%;border-collapse:collapse;}
       <div class="table-title">Usuarios registrados</div>
       <div id="user-count" style="font-size:12px;color:var(--ink3);"></div>
     </div>
-    <table class="dt">
+    <table class="dt" id="tbl-usuarios">
       <thead><tr>
-        <th>Usuario</th><th>Rol</th><th>Permisos</th><th>Estado</th><th>Último acceso</th><th>Acciones</th>
+        <th>Usuario</th><th>Rol</th><th>Estado</th><th>Último acceso</th><th>Acciones</th>
       </tr></thead>
       <tbody id="users-table"></tbody>
     </table>
+  </div>
+</div>
+
+<!-- ─── CATALOGO ─── -->
+<div class="view" id="view-catalogo">
+  <div class="page-header">
+    <div><div class="page-title">Catálogo</div><div class="page-sub">Productos y servicios que ofrece ZYGOS</div></div>
+  </div>
+
+  <div class="table-card">
+    <div class="table-header">
+      <div class="table-title">Productos</div>
+      <div id="actions-productos"></div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="dt">
+        <thead><tr><th>Producto</th><th>Categoría</th><th>Precio</th><th>Estado</th><th>Acciones</th></tr></thead>
+        <tbody id="products-table"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <div class="table-header">
+      <div class="table-title">Servicios</div>
+      <div id="actions-servicios"></div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="dt">
+        <thead><tr><th>Servicio</th><th>Precio</th><th>Estado</th><th>Acciones</th></tr></thead>
+        <tbody id="services-table"></tbody>
+      </table>
+    </div>
   </div>
 </div>
 
@@ -454,171 +554,206 @@ const PERMS_LABELS = {
 };
 
 // ═══════════════════════════
+// SUPABASE
+// ═══════════════════════════
+const SUPABASE_URL = 'https://udubevpjygryycwipucs.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkdWJldnBqeWdyeXljd2lwdWNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg4MjE5MTgsImV4cCI6MjEwNDM5NzkxOH0.NSWJaFiiBBM6xrplU6VhBzqMtk8WTbjOgwJQYoKjljo';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Separate, non-persisting client used ONLY for admin-driven signUp() calls.
+// supabase-js's auth.signUp() replaces the *calling client's* current session
+// with the newly created user's session when email confirmation is disabled —
+// which would silently log the admin out of their own session. Using an
+// isolated client with persistSession:false avoids that entirely; we never
+// use its session, we just discard it after the signUp call returns.
+function makeSignupClient() {
+  return supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false, storageKey: 'sb-signup-temp' }
+  });
+}
+
+// ═══════════════════════════
+// HELPERS
+// ═══════════════════════════
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+}
+function friendlyError(error) {
+  const msg = error?.message || 'Ocurrió un error inesperado.';
+  if (/already registered|already exists|user_already_exists/i.test(msg)) return 'Ese correo ya está registrado.';
+  if (/permission denied|row-level security|rls/i.test(msg)) return 'No tienes permiso para realizar esta acción.';
+  if (/duplicate key|unique constraint/i.test(msg)) return 'Ya existe un registro con esos datos (posible SKU duplicado).';
+  if (/invalid login credentials/i.test(msg)) return 'Correo o contraseña incorrectos.';
+  if (/check constraint/i.test(msg)) return 'Alguno de los valores ingresados no es válido.';
+  return msg;
+}
+function flagOn(id) { return !!document.getElementById(id)?.classList.contains('active'); }
+function setFlag(id, val) { document.getElementById(id)?.classList.toggle('active', !!val); }
+function toggleFormFlag(id) { document.getElementById(id)?.classList.toggle('active'); }
+
+// ═══════════════════════════
 // DATA
 // ═══════════════════════════
-const DEFAULT_USERS = [
-  { id:'u1', nombre:'Jorge Sierra', username:'admin', password:'zygos2026', email:'jorge@zygos.cl', phone:'+56 9 7137 0313', rol:'admin', cargo:'CEO / Administrador', activo:true, created:Date.now()-90*864e5, lastLogin:Date.now(), perms:ROLES.admin.perms },
-  { id:'u2', nombre:'Jorge Sierra', username:'jorge', password:'ventas123', email:'jorge@zygos.cl', phone:'+56 9 7137 0313', rol:'vendor', cargo:'Ejecutivo de Ventas', activo:true, created:Date.now()-60*864e5, lastLogin:Date.now()-2*864e5, perms:ROLES.vendor.perms },
-  { id:'u3', nombre:'Matias Sierra', username:'matias', password:'tecnico123', email:'matias@zygos.cl', phone:'+56 9 7137 0314', rol:'tecnico', cargo:'Técnico en electrónica', activo:true, created:Date.now()-60*864e5, lastLogin:Date.now()-5*864e5, perms:ROLES.tecnico.perms },
-  { id:'u4', nombre:'Cliente Demo', username:'cliente', password:'ver2026', email:'cliente@demo.cl', phone:'', rol:'cliente', cargo:'Cliente ZYGOS', activo:true, created:Date.now()-10*864e5, lastLogin:null, perms:ROLES.cliente.perms },
-];
-
-const DEFAULT_TASKS = [
-  { id:'t1', titulo:'Instalar torniquete Fitness Center', asignado:'u3', prioridad:'high', cat:'instalacion', fecha:'2026-07-10', desc:'Torniquete tripode + iDFace. Coordinar con administración.', estado:'pendiente', created:Date.now()-2*864e5 },
-  { id:'t2', titulo:'Cotización Edificio Las Palmas', asignado:'u2', prioridad:'mid', cat:'venta', fecha:'2026-07-08', desc:'Enviar propuesta completa barrera vehicular + videoportero.', estado:'proceso', created:Date.now()-3*864e5 },
-  { id:'t3', titulo:'Seguimiento Iron Planet mes 1', asignado:'u2', prioridad:'low', cat:'soporte', fecha:'2026-07-15', desc:'Llamar a Rodrigo para check de satisfacción y mantención.', estado:'pendiente', created:Date.now()-1*864e5 },
-  { id:'t4', titulo:'Renovar licencia CrossFit Prov.', asignado:'u2', prioridad:'mid', cat:'venta', fecha:'2026-07-20', desc:'Proponer renovación anual con descuento 10%.', estado:'pendiente', created:Date.now() },
-  { id:'t5', titulo:'Configurar dashboard Fitness First', asignado:'u3', prioridad:'high', cat:'instalacion', fecha:'2026-07-05', desc:'Setup completo del sistema de membresías + capacitación.', estado:'completada', created:Date.now()-5*864e5 },
-];
+// Task board has no Supabase table (out of scope for this rewrite) — it stays
+// a local/UI-only feature. It is seeded empty so it never pretends to be tied
+// to real accounts.
+const DEFAULT_TASKS = [];
 
 const DB = {
-  get users(){ try{ return JSON.parse(localStorage.getItem('z_users')||'null')||DEFAULT_USERS; }catch{ return DEFAULT_USERS; } },
   get tasks(){ try{ return JSON.parse(localStorage.getItem('z_tasks')||'null')||DEFAULT_TASKS; }catch{ return DEFAULT_TASKS; } },
   get perf() { try{ return JSON.parse(localStorage.getItem('z_perf')||'{}'); }catch{ return {}; } },
   save(key,data){ try{ localStorage.setItem('z_'+key,JSON.stringify(data)); }catch(e){} },
 };
 
-let currentUser = null;
-let editUserId  = null;
-let editTaskId  = null;
+let currentUser    = null;  // Supabase auth user
+let currentProfile = null;  // row from public.profiles
+let teamProfiles   = [];    // profiles visible to the current user (RLS-filtered)
+let PRODUCTS = [];
+let SERVICES = [];
+let editUserId    = null;
+let editTaskId    = null;
+let editProductId = null;
+let editServiceId = null;
 
 // ═══════════════════════════
 // LOGIN
 // ═══════════════════════════
-function doLogin() {
-  const username = document.getElementById('login-user').value.trim();
+async function doLogin() {
+  const email    = document.getElementById('login-user').value.trim();
   const password = document.getElementById('login-pass').value;
-  const users    = DB.users;
-  const user     = users.find(u => u.username === username && u.password === password && u.activo);
+  const errEl    = document.getElementById('login-error');
+  const btn      = document.getElementById('login-btn');
+  errEl.textContent = '';
 
-  if (!user) {
-    document.getElementById('login-error').textContent = '⚠️ Usuario o contraseña incorrectos';
+  if (!email || !password) { errEl.textContent = '⚠️ Ingresa tu correo y contraseña.'; return; }
+
+  if (btn) { btn.disabled = true; btn.textContent = 'Ingresando…'; }
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) {
+    errEl.textContent = '⚠️ Correo o contraseña incorrectos.';
     document.getElementById('login-pass').value = '';
+    if (btn) { btn.disabled = false; btn.textContent = 'Ingresar →'; }
     return;
   }
 
-  // Update last login
-  const idx = users.findIndex(u => u.id === user.id);
-  users[idx].lastLogin = Date.now();
-  DB.save('users', users);
-
-  currentUser = user;
-  sessionStorage.setItem('z_session', JSON.stringify({ id:user.id, rol:user.rol }));
-
-  document.getElementById('login-screen').classList.add('hidden');
-  setTimeout(() => {
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app-shell').style.display = 'grid';
-    initApp();
-  }, 400);
+  const ok = await loadProfileAndEnter(data.user, false);
+  if (!ok && btn) { btn.disabled = false; btn.textContent = 'Ingresar →'; }
 }
 
-function doLogout() {
-  sessionStorage.removeItem('z_session');
-  currentUser = null;
-  document.getElementById('app-shell').style.display = 'none';
-  document.getElementById('login-screen').style.display = 'flex';
-  document.getElementById('login-screen').classList.remove('hidden');
-  document.getElementById('login-user').value = '';
-  document.getElementById('login-pass').value = '';
-  document.getElementById('login-error').textContent = '';
+async function loadProfileAndEnter(authUser, instant) {
+  const errEl = document.getElementById('login-error');
+  const { data: profile, error } = await sb.from('profiles').select('*').eq('id', authUser.id).single();
+
+  if (error || !profile) {
+    await sb.auth.signOut();
+    if (errEl) errEl.textContent = '⚠️ No se pudo cargar tu perfil. Contacta al administrador.';
+    return false;
+  }
+  if (profile.activo === false) {
+    await sb.auth.signOut();
+    if (errEl) errEl.textContent = 'Tu cuenta está inactiva. Contacta al administrador.';
+    return false;
+  }
+  if (profile.rol === 'cliente') {
+    await sb.auth.signOut();
+    if (errEl) errEl.textContent = 'Tu cuenta no tiene acceso a este panel interno.';
+    return false;
+  }
+
+  currentUser    = authUser;
+  currentProfile = profile;
+
+  // Best-effort last_login stamp — don't block login on it.
+  sb.from('profiles').update({ last_login: new Date().toISOString() }).eq('id', authUser.id).then(() => {});
+
+  if (instant) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app-shell').style.display = 'grid';
+    await initApp();
+  } else {
+    document.getElementById('login-screen').classList.add('hidden');
+    await new Promise(res => setTimeout(res, 400));
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app-shell').style.display = 'grid';
+    await initApp();
+  }
+  return true;
+}
+
+async function doLogout() {
+  try { await sb.auth.signOut(); } catch (e) {}
+  location.reload();
 }
 
 function openCRM() {
-  if (!currentUser) return;
-  if (currentUser.rol === 'cliente') {
-    alert('Tu cuenta no tiene acceso al CRM. Contacta al administrador.');
-    return;
-  }
-  sessionStorage.setItem('z_session', JSON.stringify({ id:currentUser.id, rol:currentUser.rol }));
   window.open('zygos-crm.html', '_blank');
 }
 
 function openCotizador() {
-  if (!currentUser) return;
-  if (currentUser.rol === 'cliente') {
-    alert('Tu cuenta no tiene acceso al cotizador. Contacta al administrador.');
-    return;
-  }
-  sessionStorage.setItem('z_session', JSON.stringify({ id:currentUser.id, rol:currentUser.rol }));
   window.open('zygos-cotizador-pro.html', '_blank');
 }
 
 // ═══════════════════════════
 // INIT APP
 // ═══════════════════════════
-function initApp() {
-  // Topbar user info
-  const role = ROLES[currentUser.rol];
+async function initApp() {
+  renderTopbarUser();
+  applyPermissions();
+
+  await Promise.all([loadTeam(), loadCatalog()]);
+
+  const isAdmin  = currentProfile.rol === 'admin';
+  const isVendor = currentProfile.rol === 'vendor';
+  const defaultView = isAdmin ? 'usuarios' : (isVendor ? 'catalogo' : 'tareas');
+  showView(defaultView);
+}
+
+function renderTopbarUser() {
+  const role = ROLES[currentProfile.rol] || ROLES.vendor;
   document.getElementById('topbar-user').innerHTML = `
     <div style="width:28px;height:28px;border-radius:7px;background:${role.color}20;display:flex;align-items:center;justify-content:center;font-size:14px;">${role.icon}</div>
     <div>
-      <div style="font-size:12px;font-weight:700;color:var(--ink);">${currentUser.nombre.split(' ')[0]}</div>
+      <div style="font-size:12px;font-weight:700;color:var(--ink);">${esc((currentProfile.nombre||currentProfile.email||'Usuario').split(' ')[0])}</div>
       <div style="font-size:10px;color:${role.color};">${role.label}</div>
     </div>`;
-
-  // Apply permissions — hide what current user can't see
-  applyPermissions();
-  // Show session indicator in sidebar
   showSessionInfo();
-
-  renderUsers();
-  renderTasks();
-  updateBadges();
 }
 
 function showSessionInfo() {
   // Add current user badge to sidebar bottom
   const sideBottom = document.querySelector('.sidebar > div:last-child > div');
-  if (!sideBottom || !currentUser) return;
-  const role = ROLES[currentUser.rol];
+  if (!sideBottom || !currentProfile) return;
+  const existing = sideBottom.querySelector('.session-badge');
+  if (existing) existing.remove();
+  const role = ROLES[currentProfile.rol] || ROLES.vendor;
   const badge = document.createElement('div');
+  badge.className = 'session-badge';
   badge.style.cssText = 'margin-top:10px;padding:8px 10px;background:rgba(255,255,255,.04);border-radius:6px;display:flex;align-items:center;gap:8px;';
   badge.innerHTML = `<div style="width:28px;height:28px;border-radius:7px;background:${role.color}20;display:flex;align-items:center;justify-content:center;font-size:14px;">${role.icon}</div>
-    <div><div style="font-size:11px;font-weight:700;color:var(--ink);">${currentUser.nombre.split(' ')[0]}</div>
+    <div><div style="font-size:11px;font-weight:700;color:var(--ink);">${esc((currentProfile.nombre||currentProfile.email||'Usuario').split(' ')[0])}</div>
     <div style="font-size:9px;color:${role.color};">${role.label}</div></div>`;
   sideBottom.appendChild(badge);
 }
 
 function applyPermissions() {
-  const perms = currentUser.perms;
-  // Hide admin-only actions
-  if (!perms.usuarios) {
-    document.getElementById('actions-usuarios').innerHTML = '';
-    document.getElementById('actions-tareas').innerHTML = '';
+  const isAdmin  = currentProfile.rol === 'admin';
+  const isVendor = currentProfile.rol === 'vendor';
+
+  // "Gestionar usuarios" — admin only
+  const navUsuarios = document.getElementById('nav-usuarios');
+  if (navUsuarios) navUsuarios.style.display = isAdmin ? '' : 'none';
+  const mnUsuarios = document.getElementById('mn-usuarios');
+  if (mnUsuarios) mnUsuarios.style.display = isAdmin ? '' : 'none';
+  if (!isAdmin) {
+    const act = document.getElementById('actions-usuarios');
+    if (act) act.innerHTML = '';
   }
-  // If cliente, show read-only message
-  if (currentUser.rol === 'cliente') {
-    document.getElementById('view-usuarios').innerHTML = `
-      <div style="text-align:center;padding:60px;color:var(--ink3);">
-        <div style="font-size:56px;margin-bottom:16px;">👁️</div>
-        <div style="font-family:var(--fd);font-size:22px;font-weight:800;color:var(--ink);margin-bottom:8px;">Bienvenido, ${currentUser.nombre.split(' ')[0]}</div>
-        <div style="font-size:14px;color:var(--ink2);margin-bottom:6px;">Tu cuenta tiene acceso de <strong>solo lectura</strong>.</div>
-        <div style="font-size:13px;color:var(--ink3);margin-bottom:28px;">No tienes acceso al CRM ni al cotizador.<br>Contacta al administrador de ZYGOS para más información.</div>
-        <div style="display:inline-flex;flex-direction:column;gap:10px;background:var(--bg3);border:1px solid var(--line2);border-radius:12px;padding:20px 28px;text-align:left;">
-          <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--ink3);margin-bottom:4px;">Contacto ZYGOS</div>
-          <div style="font-size:13px;color:var(--ink2);">📞 +56 9 7137 0313</div>
-          <div style="font-size:13px;color:var(--ink2);">✉️ contacto@zygos.cl</div>
-          <div style="font-size:13px;color:var(--blue3);">🌐 zygos.cl</div>
-        </div>
-        <div style="margin-top:24px;">
-          <button onclick="doLogout()" style="padding:11px 28px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);border-radius:8px;color:var(--red);font-size:13px;font-weight:700;cursor:pointer;">Cerrar sesión</button>
-        </div>
-      </div>`;
-    // Hide nav items
-    ['nav-tareas','nav-rendimiento','nav-roles'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.style.display = 'none';
-    });
-    // Hide mobile nav items too
-    ['mn-tareas','mn-rendimiento','mn-roles','mn-crm'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.style.display = 'none';
-    });
-    // Hide FAB
-    const fab = document.getElementById('fab-btn');
-    if (fab) fab.style.display = 'none';
-  }
+
+  // Catálogo — admin & vendor (not tecnico)
+  const navCatalogo = document.getElementById('nav-catalogo');
+  if (navCatalogo) navCatalogo.style.display = (isAdmin || isVendor) ? '' : 'none';
+  const mnCatalogo = document.getElementById('mn-catalogo');
+  if (mnCatalogo) mnCatalogo.style.display = (isAdmin || isVendor) ? '' : 'none';
 }
 
 function showView(name) {
@@ -629,6 +764,7 @@ function showView(name) {
   if (v) v.classList.add('active');
   if (n) n.classList.add('active');
   if (name==='usuarios')     renderUsers();
+  if (name==='catalogo')     renderCatalog();
   if (name==='tareas')       renderTasks();
   if (name==='rendimiento')  renderRendimiento();
   if (name==='roles')        renderRoles();
@@ -643,9 +779,19 @@ function updateBadges() {
 // ═══════════════════════════
 // USUARIOS
 // ═══════════════════════════
+async function loadTeam() {
+  const { data, error } = await sb.from('profiles').select('*').order('created_at', { ascending: true });
+  if (error) {
+    console.error(error);
+    teamProfiles = currentProfile ? [currentProfile] : [];
+    return;
+  }
+  teamProfiles = data || [];
+}
+
 function renderUsers() {
-  const users = DB.users;
-  const canEdit = currentUser.perms.usuarios;
+  const users = teamProfiles;
+  const isAdmin = currentProfile.rol === 'admin';
 
   // Stats
   document.getElementById('user-stats').innerHTML = Object.entries(ROLES).map(([key, role]) => {
@@ -654,39 +800,33 @@ function renderUsers() {
     return `<div class="stat-mini ${colorClass}"><div class="sm-label">${role.label}</div><div class="sm-val" style="color:${role.color};">${count}</div><div class="sm-sub">${role.icon} usuarios</div></div>`;
   }).join('');
 
-  document.getElementById('user-count').textContent = `${users.length} usuarios registrados`;
+  document.getElementById('user-count').textContent = `${users.length} usuario${users.length!==1?'s':''} registrados`;
 
   document.getElementById('users-table').innerHTML = users.map(u => {
-    const role = ROLES[u.rol];
-    const permCount = Object.values(u.perms || {}).filter(Boolean).length;
-    const lastLogin = u.lastLogin
-      ? new Date(u.lastLogin).toLocaleDateString('es-CL', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })
+    const role = ROLES[u.rol] || ROLES.vendor;
+    const lastLogin = u.last_login
+      ? new Date(u.last_login).toLocaleDateString('es-CL', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })
       : 'Nunca';
+    const initial = (u.nombre || u.email || '?').trim().charAt(0).toUpperCase() || '?';
     return `<tr>
       <td>
         <div style="display:flex;align-items:center;gap:10px;">
-          <div class="u-avatar" style="background:${role.color}20;color:${role.color};">${u.nombre[0]}</div>
+          <div class="u-avatar" style="background:${role.color}20;color:${role.color};">${esc(initial)}</div>
           <div>
-            <div class="td-name">${u.nombre}</div>
-            <div style="font-size:11px;color:var(--ink3);">@${u.username} · ${u.cargo||''}</div>
+            <div class="td-name">${esc(u.nombre || '(Sin nombre)')}</div>
+            <div style="font-size:11px;color:var(--ink3);">${esc(u.email||'')}${u.cargo ? ' · '+esc(u.cargo) : ''}</div>
           </div>
         </div>
       </td>
       <td><span class="badge ${role.badge}">${role.icon} ${role.label}</span></td>
-      <td>
-        <div style="display:flex;align-items:center;gap:6px;">
-          <div class="perf-bar-bg" style="width:80px;"><div class="perf-bar-fill" style="width:${permCount/10*100}%;background:${role.color};"></div></div>
-          <span style="font-size:11px;color:var(--ink3);">${permCount}/10</span>
-        </div>
-      </td>
-      <td><span class="badge ${u.activo ? 'badge-active' : 'badge-inactive'}">${u.activo ? '● Activo' : '○ Inactivo'}</span></td>
+      <td><span class="badge ${u.activo !== false ? 'badge-active' : 'badge-inactive'}">${u.activo !== false ? '● Activo' : '○ Inactivo'}</span></td>
       <td style="font-size:12px;color:var(--ink3);">${lastLogin}</td>
       <td>
-        ${canEdit ? `
+        ${isAdmin ? `
           <div style="display:flex;gap:6px;">
             <button class="btn btn-ghost btn-sm" onclick="editUser('${u.id}')">✏️ Editar</button>
-            ${u.id !== currentUser.id
-              ? `<button class="btn btn-danger btn-sm" onclick="toggleUser('${u.id}')">${u.activo ? 'Desactivar' : 'Activar'}</button>`
+            ${u.id !== currentProfile.id
+              ? `<button class="btn btn-danger btn-sm" onclick="toggleUser('${u.id}')">${u.activo !== false ? 'Desactivar' : 'Activar'}</button>`
               : '<span style="font-size:11px;color:var(--ink3);">(tú)</span>'
             }
           </div>` : '—'
@@ -709,99 +849,72 @@ const ALL_PERMS = [
   { key:'eliminar',     label:'Eliminar registros',  icon:'🗑️' },
 ];
 
-function renderPermsGrid(selectedPerms) {
-  document.getElementById('perms-grid').innerHTML = ALL_PERMS.map(p => `
-    <div class="perm-check ${selectedPerms[p.key] ? 'active' : ''}" id="perm-${p.key}" onclick="togglePerm('${p.key}')">
-      <span style="font-size:14px;">${p.icon}</span>
-      <span style="font-size:12px;font-weight:500;">${p.label}</span>
-      <span style="margin-left:auto;font-size:14px;">${selectedPerms[p.key] ? '✓' : ''}</span>
-    </div>`).join('');
-}
-
-function togglePerm(key) {
-  const el = document.getElementById('perm-'+key);
-  el.classList.toggle('active');
-  const hasCheck = el.classList.contains('active');
-  el.querySelector('span:last-child').textContent = hasCheck ? '✓' : '';
-}
-
-function updatePermsByRole(rol) {
-  const perms = ROLES[rol]?.perms || {};
-  renderPermsGrid(perms);
-}
-
-function getCurrentPerms() {
-  const perms = {};
-  ALL_PERMS.forEach(p => {
-    perms[p.key] = document.getElementById('perm-'+p.key)?.classList.contains('active') || false;
-  });
-  return perms;
-}
-
 function openNewUser() {
   editUserId = null;
   document.getElementById('mu-title').textContent = 'Nuevo Usuario';
-  ['mu-nombre','mu-username','mu-email','mu-pass','mu-phone','mu-cargo'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('mu-rol').value = 'vendor';
-  renderPermsGrid(ROLES.vendor.perms);
+  ['mu-nombre','mu-email','mu-pass','mu-phone','mu-cargo'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('mu-email').disabled = false;
+  document.getElementById('mu-pass-fg').style.display = '';
+  document.getElementById('mu-rol-fg').style.display = 'none';
+  document.getElementById('mu-create-note').style.display = '';
+  document.getElementById('mu-activo-chk').style.display = 'none';
   openModal('modal-user');
 }
 
 function editUser(id) {
   editUserId = id;
-  const u = DB.users.find(x => x.id === id); if (!u) return;
+  const u = teamProfiles.find(x => x.id === id); if (!u) return;
   document.getElementById('mu-title').textContent = 'Editar Usuario';
-  document.getElementById('mu-nombre').value   = u.nombre;
-  document.getElementById('mu-username').value = u.username;
-  document.getElementById('mu-email').value    = u.email || '';
-  document.getElementById('mu-pass').value     = u.password;
-  document.getElementById('mu-phone').value    = u.phone || '';
-  document.getElementById('mu-cargo').value    = u.cargo || '';
-  document.getElementById('mu-rol').value      = u.rol;
-  renderPermsGrid(u.perms || ROLES[u.rol]?.perms || {});
+  document.getElementById('mu-nombre').value = u.nombre || '';
+  document.getElementById('mu-email').value  = u.email || '';
+  document.getElementById('mu-email').disabled = true;
+  document.getElementById('mu-phone').value  = u.phone || '';
+  document.getElementById('mu-cargo').value  = u.cargo || '';
+  document.getElementById('mu-pass-fg').style.display = 'none';
+  document.getElementById('mu-rol-fg').style.display = '';
+  document.getElementById('mu-rol').value = u.rol;
+  document.getElementById('mu-create-note').style.display = 'none';
+  document.getElementById('mu-activo-chk').style.display = '';
+  setFlag('mu-activo-chk', u.activo !== false);
   openModal('modal-user');
 }
 
-function saveUser() {
-  const nombre   = document.getElementById('mu-nombre').value.trim();
-  const username = document.getElementById('mu-username').value.trim();
-  const password = document.getElementById('mu-pass').value;
-  const rol      = document.getElementById('mu-rol').value;
-  if (!nombre || !username || !password) { toast('⚠️ Nombre, usuario y contraseña son obligatorios.'); return; }
-  if (password.length < 6) { toast('⚠️ La contraseña debe tener al menos 6 caracteres.'); return; }
+async function saveUser() {
+  const nombre = document.getElementById('mu-nombre').value.trim();
+  const email  = document.getElementById('mu-email').value.trim();
+  const phone  = document.getElementById('mu-phone').value.trim();
+  const cargo  = document.getElementById('mu-cargo').value.trim();
+  if (!nombre || !email) { toast('⚠️ Nombre y email son obligatorios.'); return; }
 
-  const users  = DB.users;
-  const exists = users.find(u => u.username === username && u.id !== editUserId);
-  if (exists) { toast('⚠️ Ese nombre de usuario ya existe.'); return; }
-
-  const user = {
-    id:        editUserId || 'u' + Date.now(),
-    nombre, username, password, rol,
-    email:     document.getElementById('mu-email').value.trim(),
-    phone:     document.getElementById('mu-phone').value.trim(),
-    cargo:     document.getElementById('mu-cargo').value.trim(),
-    activo:    true,
-    perms:     getCurrentPerms(),
-    created:   editUserId ? (DB.users.find(u=>u.id===editUserId)?.created || Date.now()) : Date.now(),
-    lastLogin: editUserId ? (DB.users.find(u=>u.id===editUserId)?.lastLogin || null) : null,
-  };
-
-  if (editUserId) { const i = users.findIndex(u=>u.id===editUserId); if(i>-1) users[i]=user; }
-  else users.push(user);
-  DB.save('users', users);
-  closeModal('modal-user');
-  renderUsers(); updateBadges();
-  toast(editUserId ? '✅ Usuario actualizado' : '✅ Usuario creado');
+  if (editUserId) {
+    const rol    = document.getElementById('mu-rol').value;
+    const activo = flagOn('mu-activo-chk');
+    const { error } = await sb.from('profiles').update({ nombre, rol, cargo, phone, activo }).eq('id', editUserId);
+    if (error) { toast('❌ ' + friendlyError(error)); return; }
+    closeModal('modal-user');
+    await loadTeam();
+    renderUsers(); updateBadges();
+    toast('✅ Usuario actualizado');
+  } else {
+    const password = document.getElementById('mu-pass').value;
+    if (!password || password.length < 6) { toast('⚠️ La contraseña debe tener al menos 6 caracteres.'); return; }
+    const sbSignup = makeSignupClient();
+    const { error } = await sbSignup.auth.signUp({ email, password, options: { data: { nombre, cargo } } });
+    if (error) { toast('❌ ' + friendlyError(error)); return; }
+    closeModal('modal-user');
+    await loadTeam();
+    renderUsers(); updateBadges();
+    toast("✅ Cuenta creada con rol 'vendor'. Es posible que deba confirmar su correo antes de poder iniciar sesión. Si necesitas otro rol, edítalo en la lista de abajo.", 7000);
+  }
 }
 
-function toggleUser(id) {
-  const users = DB.users;
-  const i     = users.findIndex(u => u.id === id);
-  if (i === -1) return;
-  users[i].activo = !users[i].activo;
-  DB.save('users', users);
+async function toggleUser(id) {
+  const u = teamProfiles.find(x => x.id === id); if (!u) return;
+  const { error } = await sb.from('profiles').update({ activo: !(u.activo !== false) }).eq('id', id);
+  if (error) { toast('❌ ' + friendlyError(error)); return; }
+  await loadTeam();
   renderUsers();
-  toast(users[i].activo ? '✅ Usuario activado' : '⛔ Usuario desactivado');
+  toast(u.activo !== false ? '⛔ Usuario desactivado' : '✅ Usuario activado');
 }
 
 // ═══════════════════════════
@@ -817,12 +930,12 @@ const CAT_ICONS = { instalacion:'🔧', venta:'💼', soporte:'📞', admin:'�
 
 function renderTasks() {
   const tasks = DB.tasks;
-  const users = DB.users;
-  const canEdit = currentUser.perms.usuarios || currentUser.rol !== 'cliente';
+  const users = teamProfiles;
+  const canEdit = true; // cliente never reaches this internal app (blocked at login)
 
   // Filter: técnico only sees their own tasks
-  const visibleTasks = currentUser.rol === 'tecnico'
-    ? tasks.filter(t => t.asignado === currentUser.id)
+  const visibleTasks = currentProfile.rol === 'tecnico'
+    ? tasks.filter(t => t.asignado === currentProfile.id)
     : tasks;
 
   document.getElementById('task-board').innerHTML = TASK_STAGES.map(stage => {
@@ -842,13 +955,13 @@ function renderTasks() {
               <span style="font-size:16px;">${CAT_ICONS[t.cat]||'📋'}</span>
               <span class="tc-priority ${t.prioridad}">${t.prioridad==='high'?'Alta':t.prioridad==='mid'?'Media':'Baja'}</span>
             </div>
-            <div class="tc-title">${t.titulo}</div>
-            <div class="tc-meta">${t.desc ? t.desc.substring(0,60)+(t.desc.length>60?'...':'') : ''}</div>
+            <div class="tc-title">${esc(t.titulo)}</div>
+            <div class="tc-meta">${t.desc ? esc(t.desc.substring(0,60)+(t.desc.length>60?'...':'')) : ''}</div>
             ${t.fecha ? `<div style="font-size:10px;color:${isOverdue?'var(--red)':'var(--ink3)'};margin-bottom:8px;">📅 ${new Date(t.fecha+'T12:00').toLocaleDateString('es-CL',{day:'numeric',month:'short'})}${isOverdue?' ⚠️ Vencida':''}</div>` : ''}
             <div class="tc-footer">
               <div class="tc-assigned">
-                <div style="width:20px;height:20px;border-radius:5px;background:${role.color}20;display:flex;align-items:center;justify-content:center;font-size:11px;">${assignee?.nombre[0]||'?'}</div>
-                <span>${assignee?.nombre?.split(' ')[0]||'Sin asignar'}</span>
+                <div style="width:20px;height:20px;border-radius:5px;background:${role.color}20;display:flex;align-items:center;justify-content:center;font-size:11px;">${esc(assignee?.nombre?.charAt(0)||'?')}</div>
+                <span>${esc(assignee?.nombre?.split(' ')[0]||'Sin asignar')}</span>
               </div>
               ${canEdit ? `<div style="display:flex;gap:4px;">
                 ${stage.id !== 'proceso'    ? `<button onclick="moveTask('${t.id}','${stage.id==='pendiente'?'proceso':'completada'}')" style="padding:3px 8px;background:var(--bg);border:1px solid var(--line2);border-radius:5px;font-size:10px;color:var(--ink3);cursor:pointer;">${stage.id==='pendiente'?'▶ Iniciar':'✓'}</button>` : ''}
@@ -880,12 +993,14 @@ function openNewTaskStage(estado) {
 }
 
 function populateAssignSelect() {
-  const users = DB.users.filter(u => u.activo && u.rol !== 'cliente');
+  // teamProfiles is RLS-filtered: admins see the whole team, vendor/tecnico
+  // only see their own row (profiles RLS grants full SELECT to admin only).
+  const users = teamProfiles.filter(u => u.activo !== false && u.rol !== 'cliente');
   document.getElementById('mt-asignado').innerHTML =
     '<option value="">Seleccionar usuario...</option>' +
     users.map(u => {
-      const role = ROLES[u.rol];
-      return `<option value="${u.id}">${role.icon} ${u.nombre} (${role.label})</option>`;
+      const role = ROLES[u.rol] || ROLES.vendor;
+      return `<option value="${u.id}">${role.icon} ${esc(u.nombre)} (${role.label})</option>`;
     }).join('');
 }
 
@@ -902,7 +1017,7 @@ function saveTask() {
     desc:      document.getElementById('mt-desc').value.trim(),
     estado:    'pendiente',
     created:   Date.now(),
-    createdBy: currentUser.id,
+    createdBy: currentProfile.id,
   };
   const tasks = DB.tasks;
   if (editTaskId) { const i = tasks.findIndex(t=>t.id===editTaskId); if(i>-1) tasks[i]={...tasks[i],...task,estado:tasks[i].estado}; }
@@ -941,12 +1056,12 @@ function deleteTask(id) {
 // RENDIMIENTO
 // ═══════════════════════════
 function renderRendimiento() {
-  const users = DB.users.filter(u => u.rol !== 'cliente');
+  const users = teamProfiles.filter(u => u.rol !== 'cliente');
   const tasks = DB.tasks;
   const perf  = DB.perf;
 
   const rows = users.map(u => {
-    const role       = ROLES[u.rol];
+    const role       = ROLES[u.rol] || ROLES.vendor;
     const total      = tasks.filter(t => t.asignado === u.id).length;
     const done       = tasks.filter(t => t.asignado === u.id && t.estado === 'completada').length;
     const pending    = tasks.filter(t => t.asignado === u.id && t.estado === 'pendiente').length;
@@ -969,14 +1084,14 @@ function renderRendimiento() {
 
     <div class="table-card">
       <div class="table-header"><div class="table-title">Ranking del equipo</div><div style="font-size:11px;color:var(--ink3);">Ordenado por puntos — Alta=3pts · Media=2pts · Baja=1pt</div></div>
-      <table class="dt">
+      <table class="dt" id="tbl-rendimiento">
         <thead><tr><th>#</th><th>Usuario</th><th>Rol</th><th>Tareas</th><th>Completadas</th><th>Vencidas</th><th>% Éxito</th><th>Puntos</th></tr></thead>
         <tbody>
           ${rows.map((r, i) => `<tr>
             <td style="font-family:var(--fd);font-size:16px;font-weight:800;color:${i===0?'var(--amber)':i===1?'var(--ink3)':i===2?'var(--amber)':'var(--ink3)'};">${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</td>
             <td><div style="display:flex;align-items:center;gap:10px;">
-              <div class="u-avatar" style="background:${r.role.color}20;color:${r.role.color};">${r.u.nombre[0]}</div>
-              <div><div style="font-weight:600;color:var(--ink);">${r.u.nombre}</div><div style="font-size:11px;color:var(--ink3);">@${r.u.username}</div></div>
+              <div class="u-avatar" style="background:${r.role.color}20;color:${r.role.color};">${esc(r.u.nombre?.charAt(0)||'?')}</div>
+              <div><div style="font-weight:600;color:var(--ink);">${esc(r.u.nombre||'(Sin nombre)')}</div><div style="font-size:11px;color:var(--ink3);">${esc(r.u.email||'')}</div></div>
             </div></td>
             <td><span class="badge ${r.role.badge}">${r.role.icon} ${r.role.label}</span></td>
             <td style="text-align:center;font-weight:600;">${r.total}</td>
@@ -1003,9 +1118,9 @@ function renderRendimiento() {
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:16px;">
       ${rows.map(r => `<div class="table-card" style="overflow:hidden;">
         <div style="padding:16px;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center;">
-          <div class="u-avatar" style="background:${r.role.color}20;color:${r.role.color};width:40px;height:40px;font-size:16px;">${r.u.nombre[0]}</div>
+          <div class="u-avatar" style="background:${r.role.color}20;color:${r.role.color};width:40px;height:40px;font-size:16px;">${esc(r.u.nombre?.charAt(0)||'?')}</div>
           <div>
-            <div style="font-weight:700;color:var(--ink);font-size:14px;">${r.u.nombre.split(' ')[0]}</div>
+            <div style="font-weight:700;color:var(--ink);font-size:14px;">${esc((r.u.nombre||'(Sin nombre)').split(' ')[0])}</div>
             <span class="badge ${r.role.badge}" style="font-size:9px;">${r.role.icon} ${r.role.label}</span>
           </div>
           <div style="margin-left:auto;font-family:var(--fd);font-size:20px;font-weight:800;color:var(--purple);">${r.points}pts</div>
@@ -1027,7 +1142,7 @@ function renderRoles() {
   const COLORS_MAP = { admin:'var(--purple)', vendor:'var(--blue3)', tecnico:'var(--amber)', cliente:'var(--cyan)' };
 
   document.getElementById('roles-grid').innerHTML = Object.entries(ROLES).map(([key, role]) => {
-    const userCount = DB.users.filter(u=>u.rol===key).length;
+    const userCount = teamProfiles.filter(u=>u.rol===key).length;
     const permCount = Object.values(role.perms).filter(Boolean).length;
     return `<div class="role-card" style="border-top:3px solid ${role.color};">
       <div class="role-icon">${role.icon}</div>
@@ -1060,66 +1175,225 @@ function renderRoles() {
 }
 
 // ═══════════════════════════
+// CATÁLOGO (productos y servicios)
+// ═══════════════════════════
+const CATEGORIA_LABELS = { fitness:'🏋️ Fitness', edificio:'🏢 Edificio', software:'💻 Software', otro:'📦 Otro' };
+
+async function loadCatalog() {
+  const [{ data: products, error: pErr }, { data: services, error: sErr }] = await Promise.all([
+    sb.from('products').select('*').order('orden', { ascending: true }),
+    sb.from('services').select('*').order('orden', { ascending: true }),
+  ]);
+  if (pErr) { console.error(pErr); toast('❌ No se pudo cargar productos: ' + friendlyError(pErr)); }
+  if (sErr) { console.error(sErr); toast('❌ No se pudo cargar servicios: ' + friendlyError(sErr)); }
+  PRODUCTS = products || [];
+  SERVICES = services || [];
+}
+
+function renderCatalog() {
+  const canWrite  = currentProfile.rol === 'admin' || currentProfile.rol === 'vendor';
+  const canDelete = currentProfile.rol === 'admin';
+
+  const actionsP = document.getElementById('actions-productos');
+  const actionsS = document.getElementById('actions-servicios');
+  if (actionsP) actionsP.innerHTML = canWrite ? `<button class="btn btn-primary btn-sm" onclick="openNewProduct()">+ Nuevo Producto</button>` : '';
+  if (actionsS) actionsS.innerHTML = canWrite ? `<button class="btn btn-primary btn-sm" onclick="openNewService()">+ Nuevo Servicio</button>` : '';
+
+  document.getElementById('products-table').innerHTML = PRODUCTS.length ? PRODUCTS.map(p => `<tr>
+      <td>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="u-avatar" style="background:rgba(74,114,255,.12);color:var(--blue3);font-size:16px;">${esc(p.icono||'🔐')}</div>
+          <div>
+            <div class="td-name">${esc(p.nombre)}${p.destacado ? ' <span style="color:var(--amber);">★</span>' : ''}</div>
+            <div style="font-size:11px;color:var(--ink3);">${esc(p.sku||'—')}</div>
+          </div>
+        </div>
+      </td>
+      <td>${CATEGORIA_LABELS[p.categoria]||esc(p.categoria||'—')}</td>
+      <td style="font-weight:600;color:var(--ink);">$${Number(p.precio_clp||0).toLocaleString('es-CL')} <span style="color:var(--ink3);font-weight:400;">/ ${esc(p.unidad||'unidad')}</span></td>
+      <td><span class="badge ${p.activo!==false?'badge-active':'badge-inactive'}">${p.activo!==false?'● Activo':'○ Inactivo'}</span></td>
+      <td>
+        <div style="display:flex;gap:6px;">
+          ${canWrite ? `<button class="btn btn-ghost btn-sm" onclick="editProduct('${p.id}')">✏️ Editar</button>` : ''}
+          ${canDelete ? `<button class="btn btn-danger btn-sm" onclick="deleteProduct('${p.id}')">🗑</button>` : ''}
+          ${!canWrite && !canDelete ? '—' : ''}
+        </div>
+      </td>
+    </tr>`).join('') : `<tr><td colspan="5" style="text-align:center;color:var(--ink3);padding:24px;">Sin productos registrados.</td></tr>`;
+
+  document.getElementById('services-table').innerHTML = SERVICES.length ? SERVICES.map(s => `<tr>
+      <td>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="u-avatar" style="background:rgba(16,185,129,.12);color:var(--green);font-size:16px;">${esc(s.icono||'🔧')}</div>
+          <div class="td-name">${esc(s.nombre)}</div>
+        </div>
+      </td>
+      <td style="font-weight:600;color:var(--ink);">$${Number(s.precio_clp||0).toLocaleString('es-CL')}</td>
+      <td><span class="badge ${s.activo!==false?'badge-active':'badge-inactive'}">${s.activo!==false?'● Activo':'○ Inactivo'}</span></td>
+      <td>
+        <div style="display:flex;gap:6px;">
+          ${canWrite ? `<button class="btn btn-ghost btn-sm" onclick="editService('${s.id}')">✏️ Editar</button>` : ''}
+          ${canDelete ? `<button class="btn btn-danger btn-sm" onclick="deleteService('${s.id}')">🗑</button>` : ''}
+          ${!canWrite && !canDelete ? '—' : ''}
+        </div>
+      </td>
+    </tr>`).join('') : `<tr><td colspan="4" style="text-align:center;color:var(--ink3);padding:24px;">Sin servicios registrados.</td></tr>`;
+}
+
+function openNewProduct() {
+  editProductId = null;
+  document.getElementById('mp-title').textContent = 'Nuevo Producto';
+  ['mp-nombre','mp-sku','mp-icono','mp-precio','mp-unidad','mp-desc','mp-orden'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('mp-categoria').value = 'otro';
+  setFlag('mp-activo-chk', true);
+  setFlag('mp-destacado-chk', false);
+  openModal('modal-product');
+}
+
+function editProduct(id) {
+  const p = PRODUCTS.find(x => x.id === id); if (!p) return;
+  editProductId = id;
+  document.getElementById('mp-title').textContent = 'Editar Producto';
+  document.getElementById('mp-nombre').value    = p.nombre || '';
+  document.getElementById('mp-sku').value       = p.sku || '';
+  document.getElementById('mp-categoria').value = p.categoria || 'otro';
+  document.getElementById('mp-icono').value     = p.icono || '';
+  document.getElementById('mp-precio').value    = p.precio_clp ?? '';
+  document.getElementById('mp-unidad').value    = p.unidad || '';
+  document.getElementById('mp-desc').value      = p.descripcion || '';
+  document.getElementById('mp-orden').value     = p.orden ?? '';
+  setFlag('mp-activo-chk', p.activo !== false);
+  setFlag('mp-destacado-chk', !!p.destacado);
+  openModal('modal-product');
+}
+
+async function saveProduct() {
+  const nombre = document.getElementById('mp-nombre').value.trim();
+  const precio = parseInt(document.getElementById('mp-precio').value, 10);
+  if (!nombre) { toast('⚠️ El nombre es obligatorio.'); return; }
+  if (isNaN(precio) || precio < 0) { toast('⚠️ Ingresa un precio válido (CLP).'); return; }
+  const payload = {
+    nombre,
+    sku:         document.getElementById('mp-sku').value.trim() || null,
+    categoria:   document.getElementById('mp-categoria').value,
+    icono:       document.getElementById('mp-icono').value.trim() || '🔐',
+    precio_clp:  precio,
+    unidad:      document.getElementById('mp-unidad').value.trim() || 'unidad',
+    descripcion: document.getElementById('mp-desc').value.trim() || null,
+    orden:       parseInt(document.getElementById('mp-orden').value, 10) || 0,
+    activo:      flagOn('mp-activo-chk'),
+    destacado:   flagOn('mp-destacado-chk'),
+  };
+  const { error } = editProductId
+    ? await sb.from('products').update(payload).eq('id', editProductId)
+    : await sb.from('products').insert(payload);
+  if (error) { toast('❌ ' + friendlyError(error)); return; }
+  closeModal('modal-product');
+  await loadCatalog();
+  renderCatalog();
+  toast(editProductId ? '✅ Producto actualizado' : '✅ Producto creado');
+}
+
+async function deleteProduct(id) {
+  if (!confirm('¿Eliminar este producto? Esta acción no se puede deshacer.')) return;
+  const { error } = await sb.from('products').delete().eq('id', id);
+  if (error) { toast('❌ ' + friendlyError(error)); return; }
+  await loadCatalog();
+  renderCatalog();
+  toast('🗑 Producto eliminado');
+}
+
+function openNewService() {
+  editServiceId = null;
+  document.getElementById('ms-title').textContent = 'Nuevo Servicio';
+  ['ms-nombre','ms-icono','ms-precio','ms-desc','ms-orden'].forEach(id => document.getElementById(id).value = '');
+  setFlag('ms-activo-chk', true);
+  openModal('modal-service');
+}
+
+function editService(id) {
+  const s = SERVICES.find(x => x.id === id); if (!s) return;
+  editServiceId = id;
+  document.getElementById('ms-title').textContent = 'Editar Servicio';
+  document.getElementById('ms-nombre').value = s.nombre || '';
+  document.getElementById('ms-icono').value  = s.icono || '';
+  document.getElementById('ms-precio').value = s.precio_clp ?? '';
+  document.getElementById('ms-desc').value   = s.descripcion || '';
+  document.getElementById('ms-orden').value  = s.orden ?? '';
+  setFlag('ms-activo-chk', s.activo !== false);
+  openModal('modal-service');
+}
+
+async function saveService() {
+  const nombre = document.getElementById('ms-nombre').value.trim();
+  const precioRaw = document.getElementById('ms-precio').value;
+  const precio = precioRaw === '' ? 0 : parseInt(precioRaw, 10);
+  if (!nombre) { toast('⚠️ El nombre es obligatorio.'); return; }
+  if (isNaN(precio) || precio < 0) { toast('⚠️ Ingresa un precio válido (CLP).'); return; }
+  const payload = {
+    nombre,
+    icono:       document.getElementById('ms-icono').value.trim() || '🔧',
+    precio_clp:  precio,
+    descripcion: document.getElementById('ms-desc').value.trim() || null,
+    orden:       parseInt(document.getElementById('ms-orden').value, 10) || 0,
+    activo:      flagOn('ms-activo-chk'),
+  };
+  const { error } = editServiceId
+    ? await sb.from('services').update(payload).eq('id', editServiceId)
+    : await sb.from('services').insert(payload);
+  if (error) { toast('❌ ' + friendlyError(error)); return; }
+  closeModal('modal-service');
+  await loadCatalog();
+  renderCatalog();
+  toast(editServiceId ? '✅ Servicio actualizado' : '✅ Servicio creado');
+}
+
+async function deleteService(id) {
+  if (!confirm('¿Eliminar este servicio? Esta acción no se puede deshacer.')) return;
+  const { error } = await sb.from('services').delete().eq('id', id);
+  if (error) { toast('❌ ' + friendlyError(error)); return; }
+  await loadCatalog();
+  renderCatalog();
+  toast('🗑 Servicio eliminado');
+}
+
+// ═══════════════════════════
 // MODAL HELPERS
 // ═══════════════════════════
 function openModal(id){ document.getElementById(id).classList.add('open'); }
-function closeModal(id){ document.getElementById(id).classList.remove('open'); editUserId=null; editTaskId=null; }
+function closeModal(id){
+  document.getElementById(id).classList.remove('open');
+  editUserId=null; editTaskId=null; editProductId=null; editServiceId=null;
+}
 
 // ═══════════════════════════
 // UTILS
 // ═══════════════════════════
-function toast(msg){
+function toast(msg, duration){
   const t=document.getElementById('toast');
   t.textContent=msg; t.style.transform='translateX(-50%) translateY(0)';
-  setTimeout(()=>t.style.transform='translateX(-50%) translateY(60px)',2800);
+  setTimeout(()=>t.style.transform='translateX(-50%) translateY(60px)', duration || 2800);
 }
 
 // ═══════════════════════════
 // INIT — check session
 // ═══════════════════════════
-document.addEventListener('DOMContentLoaded', () => {
-  // Check login hint from landing page
-  const hint = sessionStorage.getItem('z_login_hint');
-  if(hint === 'cliente'){
-    // Pre-fill username for client portal
-    const userInput = document.getElementById('login-user');
-    const passInput = document.getElementById('login-pass');
-    if(userInput) userInput.value = 'cliente';
-    if(passInput) passInput.focus();
-    // Show friendly message
-    const sub = document.querySelector('.login-sub');
-    if(sub){
-      sub.textContent = '👤 Portal del Cliente — ingresa tu contraseña';
-      sub.style.color = '#10B981';
-    }
-    // Hide the hints table (it shows internal credentials)
-    const hint_box = document.querySelector('.login-hint');
-    if(hint_box) hint_box.style.display = 'none';
-    sessionStorage.removeItem('z_login_hint');
-  }
-  const session = sessionStorage.getItem('z_session');
+document.addEventListener('DOMContentLoaded', async () => {
+  const { data: { session } } = await sb.auth.getSession();
   if (session) {
-    try {
-      const { id } = JSON.parse(session);
-      const user   = DB.users.find(u => u.id === id);
-      if (user && user.activo) {
-        currentUser = user;
-        document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('app-shell').style.display = 'grid';
-        initApp();
-        return;
-      }
-    } catch(e) {}
+    const ok = await loadProfileAndEnter(session.user, true);
+    if (ok) return;
   }
   // Show login
   document.getElementById('app-shell').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
 });
 
 function setMobileActive(id){
   document.querySelectorAll('.mobile-nav-item').forEach(i=>i.classList.remove('active'));
   const el=document.getElementById(id); if(el) el.classList.add('active');
   // Update FAB target based on view
-  const fabMap={'mn-usuarios':'openNewUser()','mn-tareas':'openNewTask()'};
+  const fabMap={'mn-usuarios':'openNewUser()','mn-tareas':'openNewTask()','mn-catalogo':'openNewProduct()'};
   const fab=document.getElementById('fab-btn');
   if(fab) fab.onclick=()=>{ const fn=fabMap[id]; if(fn) eval(fn); };
 }
@@ -1130,6 +1404,9 @@ function setMobileActive(id){
 <nav class="mobile-nav" id="mobile-nav">
   <div class="mobile-nav-item active" id="mn-usuarios" onclick="showView('usuarios');setMobileActive('mn-usuarios')">
     <span class="mn-icon">👥</span>Usuarios
+  </div>
+  <div class="mobile-nav-item" id="mn-catalogo" onclick="showView('catalogo');setMobileActive('mn-catalogo')">
+    <span class="mn-icon">🛒</span>Catálogo
   </div>
   <div class="mobile-nav-item" id="mn-tareas" onclick="showView('tareas');setMobileActive('mn-tareas')">
     <span class="mn-icon">✅</span>Tareas
