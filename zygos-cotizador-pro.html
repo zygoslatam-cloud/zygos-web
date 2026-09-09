@@ -1,0 +1,1543 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<!-- This site is hosted on Netlify. Anyone can build and deploy a site
+     like this one for free: https://netlify.new/?utm_campaign=ai-legible&utm_source=comment&utm_medium=referral&utm_id=1ecb3b56-c7b8-47eb-8d44-106b56f413d8
+     Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
+<meta name="hosting-provider" content="Netlify">
+<meta name="netlify-deploy" content="https://netlify.new/?utm_campaign=ai-legible&amp;utm_source=meta&amp;utm_medium=referral&amp;utm_id=1ecb3b56-c7b8-47eb-8d44-106b56f413d8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZYGOS — Cotizador Profesional</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#F4F6FF; --bg2:#FFFFFF; --bg3:#EEF2FF; --bgd:#07090E; --bgd2:#0D1228;
+  --blue:#1847F0; --blue2:#2D5BF7; --blue3:#4A72FF; --bluelt:rgba(24,71,240,.08);
+  --ink:#0D1228; --ink2:#2A3252; --silver:#5E6E92; --mist:#8896B4;
+  --line:#DDE3F0; --line2:#C8D0E8; --green:#16A34A; --greenlt:#F0FDF4;
+  --amber:#D97706; --red:#DC2626;
+  --shadow:0 2px 16px rgba(13,18,40,.07); --shadow2:0 8px 40px rgba(13,18,40,.12);
+  --r:10px; --fd:'Space Grotesk',sans-serif; --fb:'Inter',sans-serif;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--ink);font-family:var(--fb);-webkit-font-smoothing:antialiased;}
+button,input,select,textarea{font-family:var(--fb);cursor:pointer;}
+.app{display:grid;grid-template-columns:360px 1fr;min-height:100vh;}
+
+/* LEFT */
+.left{background:var(--bgd2);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;}
+.left::-webkit-scrollbar{width:4px;}
+.left::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);}
+.left-header{padding:24px 24px 16px;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0;}
+.logo-row{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+.logo-brand{font-family:var(--fd);font-size:16px;font-weight:800;letter-spacing:4px;color:#fff;}
+.logo-sub{font-size:8px;letter-spacing:3px;color:var(--blue3);text-transform:uppercase;}
+.left-title{font-size:11px;font-weight:600;letter-spacing:1px;color:rgba(255,255,255,.35);text-transform:uppercase;margin-bottom:10px;}
+.admin-btn{width:100%;padding:8px;background:rgba(24,71,240,.15);border:1px solid rgba(24,71,240,.3);color:var(--blue3);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;border-radius:6px;transition:all .2s;}
+.admin-btn:hover{background:rgba(24,71,240,.25);}
+
+/* STEPS */
+.steps-nav{padding:16px 24px;flex-shrink:0;}
+.step-item{display:flex;align-items:center;gap:12px;padding:9px 0;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.04);}
+.step-item:last-child{border:none;}
+.step-dot{width:26px;height:26px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;transition:all .2s;background:rgba(255,255,255,.06);color:rgba(255,255,255,.3);border:1px solid rgba(255,255,255,.08);}
+.step-item.active .step-dot{background:var(--blue);color:#fff;border-color:var(--blue);box-shadow:0 0 0 3px rgba(24,71,240,.25);}
+.step-item.done .step-dot{background:var(--green);color:#fff;border-color:var(--green);}
+.step-text{font-size:13px;font-weight:500;color:rgba(255,255,255,.3);transition:color .2s;}
+.step-item.active .step-text{color:#fff;}
+.step-item.done .step-text{color:rgba(255,255,255,.5);}
+
+/* RESUMEN */
+.resumen{flex:1;padding:16px 24px;border-top:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;}
+.resumen-title{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:12px;}
+.resumen-items{display:flex;flex-direction:column;flex:1;}
+.ri{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05);}
+.ri-name{font-size:12px;color:rgba(255,255,255,.65);max-width:180px;line-height:1.4;}
+.ri-qty{font-size:10px;color:rgba(255,255,255,.3);margin-top:2px;}
+.ri-price{font-family:var(--fd);font-size:12px;font-weight:700;color:rgba(255,255,255,.8);white-space:nowrap;}
+.resumen-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;color:rgba(255,255,255,.2);font-size:13px;line-height:1.6;}
+.badge-count{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--blue);color:#fff;font-size:11px;font-weight:700;}
+
+/* TOTALS */
+.totals{padding:16px 24px;border-top:1px solid rgba(255,255,255,.06);flex-shrink:0;}
+.total-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;}
+.total-label{font-size:12px;color:rgba(255,255,255,.4);}
+.total-val{font-size:12px;font-weight:600;color:rgba(255,255,255,.7);}
+.total-grand{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:rgba(24,71,240,.15);border:1px solid rgba(24,71,240,.25);margin-top:8px;}
+.tg-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--blue3);}
+.tg-val{font-family:var(--fd);font-size:20px;font-weight:800;color:#fff;}
+.total-note{font-size:10px;color:rgba(255,255,255,.2);margin-top:6px;line-height:1.5;}
+
+/* RIGHT */
+.right{padding:36px 44px;overflow-y:auto;}
+.right::-webkit-scrollbar{width:6px;}
+.right::-webkit-scrollbar-thumb{background:var(--line2);border-radius:3px;}
+.step-panel{display:none;}
+.step-panel.active{display:block;animation:fadeIn .3s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.panel-eyebrow{font-size:10px;letter-spacing:5px;text-transform:uppercase;color:var(--blue);margin-bottom:10px;display:flex;align-items:center;gap:10px;}
+.panel-eyebrow::before{content:'';width:20px;height:1px;background:var(--blue);}
+.panel-title{font-family:var(--fd);font-size:30px;font-weight:800;letter-spacing:-1px;color:var(--ink);margin-bottom:6px;}
+.panel-sub{font-size:14px;color:var(--silver);margin-bottom:28px;line-height:1.6;}
+
+/* FORM */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;}
+.form-grid.g1{grid-template-columns:1fr;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+.fl{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--blue);}
+.fi{padding:11px 14px;background:var(--bg2);border:1.5px solid var(--line);border-radius:var(--r);font-size:13px;color:var(--ink);outline:none;transition:border-color .2s;width:100%;}
+.fi:focus{border-color:var(--blue);}
+.fi::placeholder{color:var(--mist);}
+.fi-select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235E6E92' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;}
+
+/* SECTOR */
+.sector-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:24px;}
+.sector-card{padding:18px 14px;background:var(--bg2);border:2px solid var(--line);border-radius:var(--r);cursor:pointer;transition:all .25s;text-align:center;}
+.sector-card:hover{border-color:var(--blue3);background:var(--bg3);}
+.sector-card.sel{border-color:var(--blue);background:var(--bg3);box-shadow:0 0 0 3px rgba(24,71,240,.1);}
+.sc-icon{font-size:28px;margin-bottom:6px;}
+.sc-name{font-family:var(--fd);font-size:13px;font-weight:700;color:var(--ink);margin-bottom:3px;}
+.sc-desc{font-size:10px;color:var(--silver);}
+
+/* CATALOG */
+.catalog-section{margin-bottom:28px;}
+.catalog-title{font-family:var(--fd);font-size:12px;font-weight:700;letter-spacing:1px;color:var(--ink2);margin-bottom:12px;display:flex;align-items:center;gap:8px;padding-bottom:8px;border-bottom:1px solid var(--line);}
+.catalog-tag{font-size:9px;letter-spacing:2px;text-transform:uppercase;padding:3px 9px;border-radius:100px;font-weight:700;}
+.tag-fitness{background:#F5F3FF;color:#7C3AED;}
+.tag-edificio{background:var(--bg3);color:var(--blue);}
+.tag-software{background:#F0FDF4;color:var(--green);}
+.prod-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--bg2);border:1.5px solid var(--line);border-radius:var(--r);margin-bottom:7px;transition:all .2s;}
+.prod-item:hover{border-color:rgba(24,71,240,.3);background:var(--bg3);}
+.prod-item.added{border-color:var(--blue);background:var(--bg3);}
+.prod-icon{font-size:22px;flex-shrink:0;width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:var(--bg3);border-radius:8px;}
+.prod-info{flex:1;}
+.prod-name{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:2px;}
+.prod-desc{font-size:11px;color:var(--silver);line-height:1.4;}
+.prod-price-col{text-align:right;flex-shrink:0;}
+.prod-price{font-family:var(--fd);font-size:13px;font-weight:700;color:var(--blue);}
+.prod-price-note{font-size:10px;color:var(--mist);margin-top:2px;}
+.prod-add{width:32px;height:32px;border-radius:50%;border:1.5px solid var(--line2);background:none;color:var(--silver);font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;}
+.prod-add:hover{background:var(--blue);border-color:var(--blue);color:#fff;}
+.prod-item.added .prod-add{background:var(--blue);border-color:var(--blue);color:#fff;}
+.qty-ctrl{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.qty-btn{width:26px;height:26px;border-radius:6px;border:1.5px solid var(--line2);background:var(--bg2);color:var(--ink);font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.qty-btn:hover{background:var(--blue);border-color:var(--blue);color:#fff;}
+.qty-num{font-family:var(--fd);font-size:14px;font-weight:700;color:var(--ink);min-width:22px;text-align:center;}
+
+/* SERVICES */
+.service-item{display:flex;align-items:flex-start;gap:12px;padding:14px;background:var(--bg2);border:1.5px solid var(--line);border-radius:var(--r);margin-bottom:7px;cursor:default;transition:all .2s;}
+.service-item.added{border-color:var(--green);background:var(--greenlt);}
+.si-info{flex:1;}
+.si-name{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:3px;}
+.si-desc{font-size:11px;color:var(--silver);line-height:1.5;}
+
+/* DISCOUNT */
+.discount-box{background:var(--bg2);border:1.5px solid var(--line);border-radius:var(--r);padding:18px;margin-bottom:18px;}
+.disc-type-btn{padding:7px 14px;border:1.5px solid var(--line);background:none;font-size:12px;font-weight:600;color:var(--silver);border-radius:6px;transition:all .2s;}
+.disc-type-btn.active{background:var(--blue);border-color:var(--blue);color:#fff;}
+.cond-btn{padding:11px;border:1.5px solid var(--line);background:var(--bg2);border-radius:var(--r);text-align:center;cursor:pointer;transition:all .2s;}
+.cond-btn:hover,.cond-btn.sel{border-color:var(--blue);background:var(--bg3);}
+.cb-icon{font-size:18px;margin-bottom:4px;}
+.cb-label{font-size:11px;font-weight:600;color:var(--ink);}
+.cb-desc{font-size:10px;color:var(--silver);margin-top:2px;}
+
+/* ALERT */
+.alert{padding:11px 14px;border-radius:var(--r);font-size:13px;display:flex;align-items:flex-start;gap:10px;margin-bottom:14px;}
+.alert-info{background:var(--bg3);border:1px solid rgba(24,71,240,.2);color:var(--blue);}
+.alert-success{background:var(--greenlt);border:1px solid rgba(22,163,74,.2);color:var(--green);}
+
+/* NAV BUTTONS */
+.nav-btns{display:flex;justify-content:space-between;align-items:center;margin-top:28px;padding-top:20px;border-top:1px solid var(--line);}
+.btn-back{padding:11px 22px;border:1.5px solid var(--line2);color:var(--silver);background:none;font-size:13px;font-weight:500;border-radius:var(--r);transition:all .2s;}
+.btn-back:hover{border-color:var(--blue3);color:var(--blue);}
+.btn-next{padding:12px 28px;background:var(--blue);color:#fff;border:none;font-family:var(--fd);font-size:13px;font-weight:700;border-radius:var(--r);transition:all .2s;box-shadow:0 4px 14px rgba(24,71,240,.3);}
+.btn-next:hover{background:var(--blue2);transform:translateY(-1px);}
+.action-btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;}
+.btn-dl{flex:1;min-width:140px;padding:13px 18px;border-radius:var(--r);font-family:var(--fd);font-size:13px;font-weight:700;transition:all .2s;border:none;display:flex;align-items:center;justify-content:center;gap:7px;}
+.btn-wa{background:#25D366;color:#fff;box-shadow:0 4px 12px rgba(37,211,102,.3);}
+.btn-wa:hover{background:#1FB855;transform:translateY(-1px);}
+.btn-email{background:var(--bg2);color:var(--blue);border:1.5px solid var(--blue);}
+.btn-email:hover{background:var(--bg3);}
+.btn-pdf{background:var(--blue);color:#fff;box-shadow:0 4px 12px rgba(24,71,240,.3);}
+.btn-pdf:hover{background:var(--blue2);transform:translateY(-1px);}
+
+/* HISTORY */
+.hist-card{background:var(--bg2);border:1.5px solid var(--line);border-radius:var(--r);padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px;transition:border-color .2s;}
+.hist-card:hover{border-color:var(--blue3);}
+.hist-info{flex:1;min-width:0;}
+.hist-name{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:2px;}
+.hist-meta{font-size:11px;color:var(--mist);}
+.hist-total{font-family:var(--fd);font-size:15px;font-weight:800;color:var(--blue);text-align:right;flex-shrink:0;}
+.hist-total small{display:block;font-size:10px;color:var(--mist);font-weight:400;}
+.hist-empty{text-align:center;padding:28px;color:var(--mist);font-size:13px;line-height:1.6;}
+
+/* PROGRESS */
+.progress-bar{height:3px;background:linear-gradient(90deg,var(--blue),var(--blue3));transition:width .4s ease;}
+
+/* ADMIN MODAL */
+.admin-overlay{display:none;position:fixed;inset:0;z-index:500;background:rgba(7,9,14,.7);backdrop-filter:blur(8px);align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;}
+.admin-modal{background:#fff;width:100%;max-width:820px;border-radius:12px;overflow:hidden;box-shadow:0 32px 80px rgba(13,18,40,.25);margin:auto;}
+.admin-header{background:#0D1228;padding:22px 26px;display:flex;justify-content:space-between;align-items:center;}
+.admin-tabs{display:flex;border-bottom:2px solid var(--line);background:var(--bg);}
+.admin-tab{padding:12px 24px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;color:var(--silver);font-family:var(--fd);}
+.admin-tab.active{color:var(--blue);border-bottom:3px solid var(--blue);margin-bottom:-2px;}
+.admin-form{background:var(--bg);border:1.5px solid var(--line);border-radius:var(--r);padding:18px;margin-bottom:20px;}
+.admin-input{width:100%;padding:10px 13px;border:1.5px solid var(--line);border-radius:8px;font-size:13px;outline:none;font-family:var(--fb);}
+.admin-input:focus{border-color:var(--blue);}
+.admin-item{display:flex;align-items:center;gap:11px;padding:13px 14px;background:#fff;border:1.5px solid var(--line);border-radius:var(--r);margin-bottom:7px;transition:border-color .2s;}
+.admin-item:hover{border-color:var(--line2);}
+
+/* TOAST */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(60px);background:#0D1228;color:#fff;padding:11px 22px;border-radius:8px;font-size:13px;font-weight:600;z-index:600;transition:transform .3s;box-shadow:0 8px 24px rgba(0,0,0,.3);}
+
+@media(max-width:900px){.app{grid-template-columns:1fr;}.left{position:static;height:auto;order:2;}.right{padding:20px;order:1;}.form-grid{grid-template-columns:1fr;}.sector-grid{grid-template-columns:1fr 1fr;}}
+
+/* ── MOBILE RESPONSIVE ── */
+@media(max-width:768px){
+  .app{grid-template-columns:1fr!important;}
+  .left{position:static!important;height:auto!important;order:2;max-height:none;}
+  .right{padding:16px!important;order:1;}
+  .form-grid,.form-grid.g1{grid-template-columns:1fr!important;}
+  .sector-grid{grid-template-columns:1fr 1fr!important;}
+  .panel-title{font-size:22px!important;}
+  .panel-sub{font-size:13px!important;margin-bottom:18px!important;}
+  .nav-btns{flex-direction:column;gap:10px;}
+  .nav-btns .btn-back,.nav-btns .btn-next{width:100%;justify-content:center;}
+  .action-btns{flex-direction:column!important;}
+  .btn-dl{min-width:unset!important;}
+  .cond-grid{grid-template-columns:1fr 1fr!important;}
+  .left .totals{padding:16px;}
+  .tg-val{font-size:18px!important;}
+  .steps-nav{padding:12px 16px;}
+  .step-text{font-size:12px;}
+  .admin-overlay .admin-modal{border-radius:10px;}
+  .admin-modal .form-grid{grid-template-columns:1fr!important;}
+  .hist-card{flex-wrap:wrap;}
+  .hist-total{width:100%;}
+  /* Cotizacion preview responsive */
+  .cot-preview .cp-meta{grid-template-columns:1fr 1fr!important;}
+  .cot-preview .cp-client-grid{grid-template-columns:1fr!important;}
+}
+
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<!-- LOADING OVERLAY -->
+<div id="loading-overlay" style="position:fixed;inset:0;z-index:9999;background:#F4F6FF;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;">
+  <svg width="34" height="22" viewBox="0 0 30 19" fill="none"><path d="M 7 1 C 1 1 0 6 0 9.5 C 0 13 1 18 7 18" stroke="#0D1228" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M 23 1 C 29 1 30 6 30 9.5 C 30 13 29 18 23 18" stroke="#1847F0" stroke-width="2" fill="none" stroke-linecap="round"/><line x1="7" y1="9.5" x2="23" y2="9.5" stroke="#1847F0" stroke-width="1" stroke-dasharray="2.5 3.5"/><circle cx="15" cy="9.5" r="2.8" fill="#1847F0"/></svg>
+  <div style="font-size:13px;color:#5E6E92;">Cargando cotizador…</div>
+</div>
+
+<!-- MAIN APP -->
+<div class="app">
+
+<!-- ═══ LEFT PANEL ═══ -->
+<div class="left">
+  <div class="progress-bar" id="progress" style="width:20%"></div>
+  <div class="left-header">
+    <div class="logo-row">
+      <svg width="30" height="19" viewBox="0 0 30 19" fill="none"><path d="M 7 1 C 1 1 0 6 0 9.5 C 0 13 1 18 7 18" stroke="#EEF2FF" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M 23 1 C 29 1 30 6 30 9.5 C 30 13 29 18 23 18" stroke="#4A72FF" stroke-width="2" fill="none" stroke-linecap="round"/><line x1="7" y1="9.5" x2="23" y2="9.5" stroke="#1847F0" stroke-width="1" stroke-dasharray="2.5 3.5"/><circle cx="15" cy="9.5" r="2.8" fill="#4A72FF"/></svg>
+      <div><div class="logo-brand">ZYGOS</div><div class="logo-sub">Access Control</div></div>
+    </div>
+    <div class="left-title">Cotizador Profesional</div>
+    <div id="user-info" style="font-size:11px;color:rgba(255,255,255,.45);margin-bottom:10px;line-height:1.6;"></div>
+    <button onclick="cotLogout()" style="width:100%;margin-top:6px;padding:7px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);border-radius:6px;color:#EF4444;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:1px;text-transform:uppercase;" onmouseover="this.style.background='rgba(239,68,68,.2)'" onmouseout="this.style.background='rgba(239,68,68,.1)'">⬅ Cerrar sesión</button>
+  </div>
+
+  <div class="steps-nav">
+    <div class="step-item active" id="nav-1" onclick="goStep(1)"><div class="step-dot">1</div><div class="step-text">Datos del cliente</div></div>
+    <div class="step-item" id="nav-2" onclick="goStep(2)"><div class="step-dot">2</div><div class="step-text">Sector y productos</div></div>
+    <div class="step-item" id="nav-3" onclick="goStep(3)"><div class="step-dot">3</div><div class="step-text">Servicios incluidos</div></div>
+    <div class="step-item" id="nav-4" onclick="goStep(4)"><div class="step-dot">4</div><div class="step-text">Ajustes y condiciones</div></div>
+    <div class="step-item" id="nav-5" onclick="goStep(5)"><div class="step-dot">5</div><div class="step-text">Cotización final</div></div>
+  </div>
+
+  <div class="resumen">
+    <div class="resumen-title">Resumen <span class="badge-count" id="item-count">0</span></div>
+    <div class="resumen-items" id="resumen-list"><div class="resumen-empty"><div style="font-size:28px;opacity:.3;margin-bottom:8px;">🛒</div>Agrega productos para<br>ver el resumen aquí</div></div>
+  </div>
+
+  <div class="totals">
+    <div class="total-row"><span class="total-label">Subtotal neto</span><span class="total-val" id="sub-display">$ 0</span></div>
+    <div class="total-row"><span class="total-label">IVA (19%)</span><span class="total-val" id="iva-display">$ 0</span></div>
+    <div class="total-row" id="envio-row" style="display:none;"><span class="total-label">🚚 Envío</span><span class="total-val" id="envio-display">$ 0</span></div>
+    <div class="total-row" id="disc-row" style="display:none;"><span class="total-label">Descuento</span><span class="total-val" style="color:var(--green);" id="disc-display">-$ 0</span></div>
+    <div class="total-grand"><span class="tg-label">Total CLP</span><span class="tg-val" id="total-display">$ 0</span></div>
+    <div class="total-note">Precios en pesos chilenos con IVA · Válida 30 días</div>
+  </div>
+</div>
+
+<!-- ═══ RIGHT PANEL ═══ -->
+<div class="right">
+
+<!-- STEP 1 -->
+<div class="step-panel active" id="step-1">
+  <div class="panel-eyebrow">Paso 1 de 5</div>
+  <h1 class="panel-title">Datos del cliente</h1>
+  <p class="panel-sub">Selecciona un cliente existente o ingresa los datos manualmente.</p>
+
+  <!-- CLIENT DROPDOWN -->
+  <div style="background:var(--bg3);border:1.5px solid var(--blue);border-radius:var(--r);padding:16px;margin-bottom:22px;">
+    <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--blue);margin-bottom:8px;">⚡ Cargar cliente registrado</div>
+    <input id="client-search" class="fi" placeholder="🔎 Buscar por nombre o empresa…" style="margin-bottom:8px;" oninput="filterClientDropdown(this.value)"/>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <select id="client-dropdown" class="fi fi-select" style="flex:1;" onchange="loadClientFromDropdown(this.value)">
+        <option value="">— Seleccionar cliente del CRM —</option>
+      </select>
+      <button onclick="refreshClientDropdown()" style="padding:10px 14px;background:var(--bg2);border:1.5px solid var(--line2);border-radius:var(--r);font-size:13px;color:var(--silver);cursor:pointer;white-space:nowrap;transition:all .2s;" onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--line2)'">🔄</button>
+    </div>
+    <div style="font-size:11px;color:var(--mist);margin-top:6px;">Al seleccionar, se llenan los datos automáticamente. Puedes editarlos después.</div>
+  </div>
+
+  <div class="form-grid">
+    <div class="form-group"><label class="fl">Nombre / Razón Social *</label><input class="fi" id="c-nombre" placeholder="Gym Iron Planet SpA" oninput="updateClient()"/></div>
+    <div class="form-group"><label class="fl">RUT</label><input class="fi" id="c-rut" placeholder="76.543.210-K" oninput="updateClient()"/></div>
+  </div>
+  <div class="form-grid">
+    <div class="form-group"><label class="fl">Nombre de contacto *</label><input class="fi" id="c-contacto" placeholder="Rodrigo Fuentes" oninput="updateClient()"/></div>
+    <div class="form-group"><label class="fl">Cargo</label><input class="fi" id="c-cargo" placeholder="Dueño / Administrador" oninput="updateClient()"/></div>
+  </div>
+  <div class="form-grid">
+    <div class="form-group"><label class="fl">Email *</label><input class="fi" type="email" id="c-email" placeholder="contacto@gym.cl" oninput="updateClient()"/></div>
+    <div class="form-group"><label class="fl">WhatsApp</label><input class="fi" id="c-phone" placeholder="+56 9 XXXX XXXX" oninput="updateClient()"/></div>
+  </div>
+  <div class="form-grid g1">
+    <div class="form-group"><label class="fl">Dirección del espacio</label><input class="fi" id="c-dir" placeholder="Av. Providencia 1234, Santiago" oninput="updateClient()"/></div>
+  </div>
+  <div class="form-grid">
+    <div class="form-group"><label class="fl">Ciudad</label>
+      <select class="fi fi-select" id="c-ciudad" onchange="updateClient()">
+        <option value="">Seleccionar...</option>
+        <option>Santiago</option><option>Viña del Mar</option><option>Valparaíso</option>
+        <option>Concepción</option><option>La Serena</option><option>Temuco</option>
+        <option>Antofagasta</option><option>Otra</option>
+      </select>
+    </div>
+    <div class="form-group"><label class="fl">N° Cotización</label><input class="fi" id="c-nro" oninput="updateClient()"/></div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 14px;background:var(--bg2);border:1.5px dashed var(--line2);border-radius:var(--r);margin-top:4px;">
+    <div style="flex:1;min-width:200px;font-size:11px;color:var(--silver);">¿Cliente nuevo? Completa sus datos arriba y guárdalo en el CRM para vincularlo a esta cotización.</div>
+    <button id="new-client-btn" onclick="guardarClienteNuevo()" style="padding:9px 16px;background:var(--bg2);border:1.5px solid var(--blue);color:var(--blue);border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">💾 Guardar como cliente nuevo</button>
+  </div>
+  <div id="client-link-status" style="font-size:11px;margin-top:8px;display:none;"></div>
+  <div class="nav-btns"><div></div><button class="btn-next" onclick="goStep(2)">Seleccionar productos →</button></div>
+</div>
+
+<!-- STEP 2 -->
+<div class="step-panel" id="step-2">
+  <div class="panel-eyebrow">Paso 2 de 5</div>
+  <h1 class="panel-title">Sector y productos</h1>
+  <p class="panel-sub">Selecciona el sector y agrega los equipos requeridos.</p>
+  <div class="sector-grid">
+    <div class="sector-card sel" id="sec-todos" onclick="filterSector('todos',this)"><div class="sc-icon">⚡</div><div class="sc-name">Todos</div><div class="sc-desc">Catálogo completo</div></div>
+    <div class="sector-card" id="sec-fitness" onclick="filterSector('fitness',this)"><div class="sc-icon">🏋️</div><div class="sc-name">Fitness</div><div class="sc-desc">Gyms y centros deportivos</div></div>
+    <div class="sector-card" id="sec-edificio" onclick="filterSector('edificio',this)"><div class="sc-icon">🏢</div><div class="sc-name">Edificios</div><div class="sc-desc">Condominios y torres</div></div>
+  </div>
+  <div id="catalog-container"></div>
+  <div class="nav-btns"><button class="btn-back" onclick="goStep(1)">← Atrás</button><button class="btn-next" onclick="goStep(3)">Seleccionar servicios →</button></div>
+</div>
+
+<!-- STEP 3 -->
+<div class="step-panel" id="step-3">
+  <div class="panel-eyebrow">Paso 3 de 5</div>
+  <h1 class="panel-title">Servicios incluidos</h1>
+  <p class="panel-sub">Marca los servicios que incluirá esta cotización.</p>
+  <div class="alert alert-info">💡 Marca cada servicio para incluirlo. Precio y cantidad son editables por ítem.</div>
+  <div id="services-container"></div>
+  <div class="nav-btns"><button class="btn-back" onclick="goStep(2)">← Atrás</button><button class="btn-next" onclick="goStep(4)">Ajustes y condiciones →</button></div>
+</div>
+
+<!-- STEP 4 -->
+<div class="step-panel" id="step-4">
+  <div class="panel-eyebrow">Paso 4 de 5</div>
+  <h1 class="panel-title">Ajustes y condiciones</h1>
+  <p class="panel-sub">Aplica descuentos, define la forma de pago y las condiciones.</p>
+  <div class="discount-box">
+    <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:12px;">🏷️ Descuento (opcional)</div>
+    <div style="display:flex;gap:10px;align-items:flex-end;">
+      <div class="form-group" style="flex:1;"><label class="fl">Valor</label><input class="fi" type="number" id="disc-val" placeholder="0" min="0" oninput="updateTotals()"/></div>
+      <div><div class="fl" style="margin-bottom:6px;">Tipo</div><div style="display:flex;gap:4px;"><button class="disc-type-btn active" id="dt-pct" onclick="setDiscType('pct')">%</button><button class="disc-type-btn" id="dt-clp" onclick="setDiscType('clp')">CLP</button></div></div>
+    </div>
+  </div>
+  <div class="form-group" style="margin-bottom:16px;"><label class="fl">Forma de pago</label>
+    <select class="fi fi-select" id="forma-pago">
+      <option>50% al aprobar · 50% al término instalación</option>
+      <option>100% al aprobar cotización</option>
+      <option>30% al aprobar · 70% al término</option>
+      <option>Financiamiento 3 cuotas iguales</option>
+      <option>Personalizado</option>
+    </select>
+  </div>
+  <div style="margin-bottom:16px;">
+    <div class="fl" style="margin-bottom:10px;">Condiciones incluidas</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;" id="cond-grid"></div>
+  </div>
+  <div class="form-grid">
+    <div class="form-group"><label class="fl">Validez</label><select class="fi fi-select" id="validez"><option>30 días</option><option>15 días</option><option>45 días</option><option>60 días</option></select></div>
+    <div class="form-group"><label class="fl">Plazo de instalación</label><select class="fi fi-select" id="plazo"><option>72 horas hábiles desde aprobación</option><option>5 días hábiles</option><option>7 días hábiles</option><option>A coordinar con el cliente</option></select></div>
+  </div>
+  <div class="form-group" style="margin-top:14px;"><label class="fl">Notas / Observaciones</label><textarea class="fi" id="notas" rows="3" placeholder="Ej: Materiales de cableado incluidos, visita previa coordinada, etc."></textarea></div>
+  <div class="nav-btns"><button class="btn-back" onclick="goStep(3)">← Atrás</button><button class="btn-next" onclick="goStep(5)">Ver cotización final →</button></div>
+</div>
+
+<!-- STEP 5 -->
+<div class="step-panel" id="step-5">
+  <div class="panel-eyebrow">Paso 5 de 5</div>
+  <h1 class="panel-title">Cotización lista</h1>
+  <p class="panel-sub">Revisa, descarga en PDF o envía al cliente.</p>
+  <div class="alert alert-success">✅ Cotización generada. Guárdala para registrar el link de pago.</div>
+
+  <div id="save-quote-box" style="margin-bottom:18px;">
+    <button class="btn-next" id="save-quote-btn" onclick="guardarCotizacion()" style="width:100%;justify-content:center;display:flex;align-items:center;gap:8px;">💾 Guardar cotización y generar link de pago</button>
+    <div id="save-quote-error" class="alert" style="display:none;background:#FEF2F2;border:1px solid #FECACA;color:#DC2626;margin-top:10px;"></div>
+  </div>
+  <div id="payment-link-box" style="display:none;background:var(--bg3);border:1.5px solid var(--blue);border-radius:var(--r);padding:16px;margin-bottom:18px;">
+    <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--blue);margin-bottom:8px;">🔗 Link de pago</div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <input id="payment-link-input" class="fi" readonly style="flex:1;font-size:12px;"/>
+      <button onclick="copyPaymentLink()" style="padding:10px 16px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">📋 Copiar</button>
+    </div>
+    <div style="font-size:11px;color:var(--mist);margin-top:6px;">Envía este link al cliente para que pague en línea con Webpay.</div>
+  </div>
+
+  <div id="cot-preview" style="background:var(--bgd2);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow2);"></div>
+  <div class="action-btns">
+    <button class="btn-dl btn-wa" onclick="sendWhatsApp()">💬 WhatsApp</button>
+    <button class="btn-dl btn-email" onclick="sendEmail()">📧 Email</button>
+    <button class="btn-dl btn-pdf" id="pdf-btn" onclick="downloadPDF()">⬇ Descargar PDF</button>
+  </div>
+  <div style="margin-top:28px;padding-top:22px;border-top:1px solid var(--line);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+      <div><div style="font-family:var(--fd);font-size:15px;font-weight:700;color:var(--ink);">🗂 Cotizaciones registradas</div><div style="font-size:11px;color:var(--silver);margin-top:2px;">Guardadas en el sistema ZYGOS</div></div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <select id="hist-filter-client" onchange="renderHistory()" style="padding:7px 12px;background:var(--bg2);border:1.5px solid var(--line);border-radius:8px;font-size:12px;color:var(--ink);outline:none;min-width:180px;">
+          <option value="">👥 Todos los clientes</option>
+        </select>
+        <select id="hist-filter-sort" onchange="renderHistory()" style="padding:7px 12px;background:var(--bg2);border:1.5px solid var(--line);border-radius:8px;font-size:12px;color:var(--ink);outline:none;">
+          <option value="reciente">Más reciente</option>
+          <option value="mayor">Mayor monto</option>
+          <option value="menor">Menor monto</option>
+        </select>
+        <button onclick="loadQuotesHistory()" style="padding:7px 12px;border:1.5px solid var(--line2);background:none;color:var(--mist);font-size:11px;font-weight:600;border-radius:8px;cursor:pointer;">🔄 Actualizar</button>
+      </div>
+    </div>
+    <div id="hist-summary" style="display:none;padding:10px 16px;background:var(--bg3);border:1px solid var(--line);border-radius:var(--r);margin-bottom:12px;flex-wrap:wrap;gap:16px;align-items:center;"></div>
+    <div id="history-list"></div>
+  </div>
+  <div class="nav-btns" style="margin-top:16px;">
+    <button class="btn-back" onclick="goStep(4)">← Volver a ajustes</button>
+    <button class="btn-next" style="background:var(--green);box-shadow:0 4px 14px rgba(22,163,74,.3);" onclick="nuevaCotizacion()">✨ Nueva cotización</button>
+  </div>
+</div>
+
+</div><!-- /right -->
+</div><!-- /app -->
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+// ═══ SUPABASE ═══
+const SUPABASE_URL = 'https://udubevpjygryycwipucs.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkdWJldnBqeWdyeXljd2lwdWNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg4MjE5MTgsImV4cCI6MjEwNDM5NzkxOH0.NSWJaFiiBBM6xrplU6VhBzqMtk8WTbjOgwJQYoKjljo';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let currentSession = null;
+let currentProfile = null;
+let isReadOnly = false; // true for rol 'tecnico'
+
+// ═══ DATA (loaded live from Supabase) ═══
+let products = [];   // public.products, activo=true only
+let services = [];   // public.services, activo=true only
+let allClients = []; // public.clients, cached for the dropdown/search
+let quotesCache = []; // public.quotes, loaded on step 5
+
+const conditions = [
+  { id:'c1', icon:'✅', label:'Instalación incluida', desc:'Llave en mano' },
+  { id:'c2', icon:'🎓', label:'Capacitación incluida', desc:'Personal entrenado' },
+  { id:'c3', icon:'🛡️', label:'Garantía 12 meses', desc:'Hardware cubierto' },
+  { id:'c4', icon:'⚡', label:'Instalación en 72h', desc:'Desde aprobación' },
+  { id:'c5', icon:'📞', label:'Soporte &lt;24h', desc:'Canal prioritario' },
+  { id:'c6', icon:'💰', label:'Precio con IVA', desc:'Sin costos ocultos' },
+];
+
+// ═══ STATE ═══
+let state = {
+  step:1, client:{}, cart:{}, services:{}, svcQty:{}, svcPrice:{}, envio:0,
+  conditions:{c1:true,c3:true,c4:true,c6:true}, discType:'pct', discVal:0, sector:'todos',
+  selectedClientId:null,
+};
+let savedQuote = null; // {id, nro} of the quote saved in this session, if any
+
+function nuevoNro() {
+  const d = new Date();
+  const p = n => String(n).padStart(2,'0');
+  return `ZYG-${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
+}
+
+// ═══ INIT ═══
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    await checkCotAccess(); // redirects away if not authorized; throws to stop init on failure
+  } catch (e) {
+    return;
+  }
+
+  document.getElementById('c-nro').value = nuevoNro();
+
+  try {
+    await Promise.all([loadProducts(), loadServices(), loadClients()]);
+  } catch (e) {
+    console.error(e);
+    toast('⚠️ No se pudo cargar el catálogo o los clientes. Revisa tu conexión y recarga la página.');
+  }
+
+  renderCatalog(); renderServices(); renderConditions(); updateResumen(); updateTotals();
+  const overlay = document.getElementById('loading-overlay');
+  if (overlay) overlay.remove();
+});
+
+// ═══ DATA LOADING (Supabase) ═══
+async function loadProducts() {
+  const { data, error } = await sb.from('products').select('*').order('orden');
+  if (error) { toast('⚠️ Error cargando productos: ' + error.message); products = []; return; }
+  products = (data||[]).filter(p => p.activo === true);
+}
+
+async function loadServices() {
+  const { data, error } = await sb.from('services').select('*').order('orden');
+  if (error) { toast('⚠️ Error cargando servicios: ' + error.message); services = []; return; }
+  services = (data||[]).filter(s => s.activo === true);
+}
+
+async function loadClients() {
+  const { data, error } = await sb.from('clients').select('*').order('nombre').limit(500);
+  if (error) { toast('⚠️ Error cargando clientes: ' + error.message); allClients = []; return; }
+  allClients = data || [];
+  refreshClientDropdown();
+}
+
+// ═══ NAVIGATION ═══
+function goStep(n) {
+  document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.step-item').forEach((item, i) => {
+    item.classList.remove('active','done');
+    if (i+1 < n) item.classList.add('done');
+    else if (i+1 === n) item.classList.add('active');
+  });
+  document.getElementById(`step-${n}`).classList.add('active');
+  document.getElementById('progress').style.width = `${n*20}%`;
+  state.step = n;
+  if (n === 5) { renderPreview(); loadQuotesHistory(); }
+  document.querySelector('.right').scrollTo(0,0);
+}
+
+// ═══ CLIENT ═══
+function updateClient() {
+  state.client = {
+    nombre:   document.getElementById('c-nombre')?.value||'',
+    rut:      document.getElementById('c-rut')?.value||'',
+    contacto: document.getElementById('c-contacto')?.value||'',
+    cargo:    document.getElementById('c-cargo')?.value||'',
+    email:    document.getElementById('c-email')?.value||'',
+    phone:    document.getElementById('c-phone')?.value||'',
+    dir:      document.getElementById('c-dir')?.value||'',
+    ciudad:   document.getElementById('c-ciudad')?.value||'',
+    nro:      document.getElementById('c-nro')?.value||nuevoNro(),
+  };
+}
+
+// ═══ CATALOG ═══
+function filterSector(sec, el) {
+  state.sector = sec;
+  document.querySelectorAll('.sector-card').forEach(c => c.classList.remove('sel'));
+  el.classList.add('sel');
+  renderCatalog();
+}
+
+function renderCatalog() {
+  const filtered = state.sector === 'todos' ? products : products.filter(p => p.categoria === state.sector);
+  const cats = [...new Set(filtered.map(p => p.categoria))].filter(c => c==='fitness'||c==='edificio');
+  const catLabels = { fitness:'🏋️ Fitness & Gimnasios', edificio:'🏢 Edificios & Condominios' };
+  const catTags   = { fitness:'tag-fitness', edificio:'tag-edificio' };
+  let html = '';
+  if (!products.length) {
+    document.getElementById('catalog-container').innerHTML = `<div class="resumen-empty" style="padding:30px;color:var(--mist);">Aún no hay productos activos en el catálogo.</div>`;
+    return;
+  }
+  cats.forEach(cat => {
+    const items = filtered.filter(p => p.categoria === cat);
+    html += `<div class="catalog-section"><div class="catalog-title">${catLabels[cat]||cat}<span class="catalog-tag ${catTags[cat]||'tag-software'}">${items.length} productos</span></div>`;
+    items.forEach(p => html += prodRow(p));
+    html += `</div>`;
+  });
+  // Software / otro — always shown when browsing "todos" or "fitness" (matches original UX)
+  const sw = products.filter(p => !['fitness','edificio'].includes(p.categoria));
+  if (sw.length && (state.sector==='todos'||state.sector==='fitness')) {
+    html += `<div class="catalog-section"><div class="catalog-title">☁️ Software & Licencias <span class="catalog-tag tag-software">anuales</span></div>`;
+    sw.forEach(p => html += prodRow(p));
+    html += `</div>`;
+  }
+  document.getElementById('catalog-container').innerHTML = html;
+}
+
+function prodRow(p) {
+  const inCart = state.cart[p.id] > 0;
+  const qty    = state.cart[p.id] || 0;
+  return `<div class="prod-item ${inCart?'added':''}" id="pi-${p.id}">
+    <div class="prod-icon">${p.icono||'🔐'}</div>
+    <div class="prod-info"><div class="prod-name">${p.nombre}</div><div class="prod-desc">${p.descripcion||''}</div></div>
+    <div class="prod-price-col"><div class="prod-price">$ ${fmt(p.precio_clp)}</div><div class="prod-price-note">por ${p.unidad||'unidad'}</div></div>
+    ${inCart
+      ? `<div class="qty-ctrl">
+          <button class="qty-btn" onclick="changeQty('${p.id}',-1)">−</button>
+          <span class="qty-num">${qty}</span>
+          <button class="qty-btn" onclick="changeQty('${p.id}',1)">+</button>
+          <button onclick="removeProduct('${p.id}')" style="width:26px;height:26px;border-radius:6px;border:1.5px solid #FECACA;background:#FEF2F2;color:#DC2626;font-size:12px;cursor:pointer;margin-left:3px;display:flex;align-items:center;justify-content:center;">✕</button>
+        </div>`
+      : `<button class="prod-add" onclick="addProduct('${p.id}')">+</button>`
+    }
+  </div>`;
+}
+
+function addProduct(id) { state.cart[id]=1; renderCatalog(); updateResumen(); updateTotals(); }
+function removeProduct(id) { delete state.cart[id]; renderCatalog(); updateResumen(); updateTotals(); }
+function changeQty(id, delta) {
+  const n = (state.cart[id]||0)+delta;
+  if (n<=0) delete state.cart[id]; else state.cart[id]=n;
+  renderCatalog(); updateResumen(); updateTotals();
+}
+
+// ═══ SERVICES ═══
+function renderServices() {
+  let html = '';
+  if (!services.length) {
+    html += `<div class="resumen-empty" style="padding:20px;color:var(--mist);">Aún no hay servicios activos en el catálogo.</div>`;
+  }
+  services.forEach(sv => {
+    const added = !!state.services[sv.id];
+    const qty   = state.svcQty?.[sv.id]   || 1;
+    const price = state.svcPrice?.[sv.id] !== undefined ? state.svcPrice[sv.id] : sv.precio_clp;
+    html += `<div class="service-item ${added?'added':''}" id="si-${sv.id}" style="cursor:default;">
+      <div onclick="toggleService('${sv.id}')" style="width:22px;height:22px;border-radius:5px;flex-shrink:0;cursor:pointer;border:2px solid ${added?'var(--green)':'var(--line2)'};background:${added?'var(--green)':'var(--bg2)'};display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700;margin-top:2px;transition:all .2s;">${added?'✓':''}</div>
+      <div class="si-info" onclick="toggleService('${sv.id}')" style="cursor:pointer;">
+        <div class="si-name" style="${added?'':'color:var(--mist);'}">${sv.nombre}</div>
+        <div class="si-desc">${sv.descripcion||''}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;opacity:${added?1:.35};transition:opacity .2s;">
+        <div style="display:flex;align-items:center;gap:5px;">
+          <span style="font-size:11px;color:var(--mist);">$</span>
+          <input type="number" value="${price}" min="0" style="width:95px;padding:5px 7px;border:1.5px solid var(--line);border-radius:6px;font-family:var(--fd);font-size:13px;font-weight:700;color:var(--blue);text-align:right;outline:none;" oninput="setSvcPrice('${sv.id}',this.value,event)" onclick="event.stopPropagation()"/>
+          <span style="font-size:10px;color:var(--mist);">CLP</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:5px;">
+          <span style="font-size:10px;color:var(--mist);">Cant.</span>
+          <button onclick="event.stopPropagation();changeSvcQty('${sv.id}',-1)" style="width:22px;height:22px;border:1.5px solid var(--line2);background:var(--bg2);border-radius:5px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;">−</button>
+          <span style="font-family:var(--fd);font-size:13px;font-weight:700;min-width:18px;text-align:center;">${qty}</span>
+          <button onclick="event.stopPropagation();changeSvcQty('${sv.id}',1)" style="width:22px;height:22px;border:1.5px solid var(--line2);background:var(--bg2);border-radius:5px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;">+</button>
+        </div>
+      </div>
+    </div>`;
+  });
+  // Envío
+  const envio = state.envio||0;
+  html += `<div style="margin-top:16px;padding:14px;background:var(--bg2);border:1.5px solid var(--line);border-radius:var(--r);">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <div style="font-size:20px;">🚚</div>
+      <div style="flex:1;"><div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:2px;">Costo de Envío / Traslado</div><div style="font-size:11px;color:var(--silver);">Variable según ubicación. Dejar en 0 si está incluido.</div></div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="font-size:11px;color:var(--mist);">$</span>
+        <input type="number" id="envio-val" value="${envio}" min="0" placeholder="0" style="width:110px;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-family:var(--fd);font-size:14px;font-weight:700;color:var(--blue);text-align:right;outline:none;" oninput="setEnvio(this.value)"/>
+        <span style="font-size:11px;color:var(--mist);">CLP</span>
+      </div>
+    </div>
+  </div>`;
+  document.getElementById('services-container').innerHTML = html;
+}
+
+function toggleService(id) {
+  if (!state.svcQty)   state.svcQty   = {};
+  if (!state.svcPrice) state.svcPrice = {};
+  if (state.services[id]) { delete state.services[id]; }
+  else {
+    state.services[id] = true;
+    if (!state.svcQty[id]) state.svcQty[id] = 1;
+    const sv = services.find(x=>x.id===id);
+    if (sv && state.svcPrice[id]===undefined) state.svcPrice[id] = sv.precio_clp;
+  }
+  renderServices(); updateResumen(); updateTotals();
+}
+
+function changeSvcQty(id, delta) {
+  if (!state.svcQty) state.svcQty = {};
+  state.svcQty[id] = Math.max(1,(state.svcQty[id]||1)+delta);
+  renderServices();
+  if (state.services[id]) { updateResumen(); updateTotals(); }
+}
+
+function setSvcPrice(id, val, event) {
+  if (event) event.stopPropagation();
+  if (!state.svcPrice) state.svcPrice = {};
+  state.svcPrice[id] = parseFloat(val)||0;
+  if (state.services[id]) { updateResumen(); updateTotals(); }
+}
+
+function setEnvio(val) { state.envio = parseFloat(val)||0; updateResumen(); updateTotals(); }
+
+// ═══ CONDITIONS ═══
+function renderConditions() {
+  let html = '';
+  conditions.forEach(c => {
+    const sel = state.conditions[c.id];
+    html += `<div class="cond-btn ${sel?'sel':''}" onclick="toggleCond('${c.id}',this)"><div class="cb-icon">${c.icon}</div><div class="cb-label">${c.label}</div><div class="cb-desc">${c.desc}</div></div>`;
+  });
+  document.getElementById('cond-grid').innerHTML = html;
+}
+function toggleCond(id, el) {
+  if (state.conditions[id]) delete state.conditions[id]; else state.conditions[id]=true;
+  el.classList.toggle('sel');
+}
+
+// ═══ DISCOUNT ═══
+function setDiscType(t) {
+  state.discType = t;
+  document.getElementById('dt-pct').classList.toggle('active', t==='pct');
+  document.getElementById('dt-clp').classList.toggle('active', t==='clp');
+  updateTotals();
+}
+
+// ═══ TOTALS ═══
+function getSubtotal() {
+  let sub = 0;
+  Object.entries(state.cart).forEach(([id,qty]) => { const p=products.find(x=>x.id===id); if(p) sub+=p.precio_clp*qty; });
+  Object.keys(state.services).forEach(id => {
+    const sv=services.find(x=>x.id===id); if(!sv) return;
+    const price=state.svcPrice?.[id]!==undefined?state.svcPrice[id]:sv.precio_clp;
+    const qty=state.svcQty?.[id]||1;
+    if(price>0) sub+=price*qty;
+  });
+  sub += state.envio||0;
+  return sub;
+}
+
+function getDiscount(sub) {
+  const v = parseFloat(document.getElementById('disc-val')?.value||0)||0;
+  return state.discType==='pct' ? Math.round(sub*v/100) : v;
+}
+
+function updateTotals() {
+  const sub=getSubtotal(), disc=getDiscount(sub), base=sub-disc;
+  const iva=Math.round(base*0.19), tot=base+iva, envio=state.envio||0;
+  document.getElementById('sub-display').textContent   = '$ '+fmt(sub);
+  document.getElementById('iva-display').textContent   = '$ '+fmt(iva);
+  document.getElementById('total-display').textContent = '$ '+fmt(tot);
+  const er=document.getElementById('envio-row');
+  if(er){if(envio>0){er.style.display='flex';document.getElementById('envio-display').textContent='$ '+fmt(envio);}else er.style.display='none';}
+  const dr=document.getElementById('disc-row');
+  if(disc>0){dr.style.display='flex';document.getElementById('disc-display').textContent='-$ '+fmt(disc);}else dr.style.display='none';
+}
+
+// ═══ RESUMEN ═══
+function updateResumen() {
+  const items = [];
+  Object.entries(state.cart).forEach(([id,qty]) => { const p=products.find(x=>x.id===id); if(p) items.push({name:p.nombre,qty,price:p.precio_clp*qty,included:false}); });
+  Object.keys(state.services).forEach(id => {
+    const sv=services.find(x=>x.id===id); if(!sv) return;
+    const price=state.svcPrice?.[id]!==undefined?state.svcPrice[id]:sv.precio_clp;
+    const qty=state.svcQty?.[id]||1;
+    items.push({name:sv.nombre,qty,price:price*qty,included:price===0});
+  });
+  if(state.envio>0) items.push({name:'🚚 Envío',qty:1,price:state.envio,included:false});
+  document.getElementById('item-count').textContent = items.length;
+  if(!items.length){document.getElementById('resumen-list').innerHTML=`<div class="resumen-empty"><div style="font-size:28px;opacity:.3;margin-bottom:8px;">🛒</div>Agrega productos para<br>ver el resumen aquí</div>`;return;}
+  document.getElementById('resumen-list').innerHTML = items.map(it=>`<div class="ri"><div><div class="ri-name">${it.name.length>32?it.name.substring(0,30)+'…':it.name}</div><div class="ri-qty">x${it.qty}</div></div>${it.included?`<div style="font-size:10px;font-weight:700;color:var(--green);">✓ INCLUIDO</div>`:`<div class="ri-price">$ ${fmt(it.price)}</div>`}</div>`).join('');
+}
+
+// ═══ PREVIEW (in-app dark) ═══
+function renderPreview() {
+  updateClient();
+  const c=state.client, sub=getSubtotal(), disc=getDiscount(sub), base=sub-disc;
+  const iva=Math.round(base*0.19), tot=base+iva;
+  const date=new Date().toLocaleDateString('es-CL');
+  const fp=document.getElementById('forma-pago')?.value||'—';
+  const val=document.getElementById('validez')?.value||'30 días';
+  const plazo=document.getElementById('plazo')?.value||'72 horas hábiles';
+  const notas=document.getElementById('notas')?.value||'';
+  const selConds=conditions.filter(x=>state.conditions[x.id]);
+  let itemsHtml='';
+  Object.entries(state.cart).forEach(([id,qty])=>{const p=products.find(x=>x.id===id);if(!p)return;const cat=p.categoria==='fitness'?'Fitness':p.categoria==='edificio'?'Edificios':'Software';itemsHtml+=`<tr><td style="padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:top;"><span style="font-size:9px;color:#4A72FF;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:2px;">${cat}</span><span style="font-size:13px;font-weight:600;color:#fff;">${p.nombre}</span></td><td style="padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04);text-align:center;color:rgba(255,255,255,.5);font-size:13px;">${qty}</td><td style="padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04);text-align:right;color:rgba(255,255,255,.5);font-size:13px;">$ ${fmt(p.precio_clp)}</td><td style="padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04);text-align:right;font-family:var(--fd);font-weight:700;color:#4A72FF;font-size:13px;">$ ${fmt(p.precio_clp*qty)}</td></tr>`;});
+  Object.keys(state.services).forEach(id=>{const sv=services.find(x=>x.id===id);if(!sv)return;const price=state.svcPrice?.[id]!==undefined?state.svcPrice[id]:sv.precio_clp;const qty=state.svcQty?.[id]||1;const total=price*qty;itemsHtml+=`<tr><td style="padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:top;"><span style="font-size:9px;color:#4A72FF;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:2px;">Servicio</span><span style="font-size:13px;font-weight:600;color:#fff;">${sv.nombre}</span></td><td style="padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04);text-align:center;color:rgba(255,255,255,.5);font-size:13px;">${qty}</td><td style="padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04);text-align:right;color:rgba(255,255,255,.5);font-size:13px;">${price===0?'—':'$ '+fmt(price)}</td><td style="padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04);text-align:right;font-family:var(--fd);font-weight:700;font-size:13px;color:${price===0?'#4ADE80':'#4A72FF'};">${price===0?'✓ Incluido':'$ '+fmt(total)}</td></tr>`;});
+  if(state.envio>0) itemsHtml+=`<tr><td style="padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04);"><span style="font-size:9px;color:#4A72FF;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:2px;">Logística</span><span style="font-size:13px;font-weight:600;color:#fff;">🚚 Envío / Traslado</span></td><td style="padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04);text-align:center;color:rgba(255,255,255,.5);">1</td><td style="padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04);text-align:right;color:rgba(255,255,255,.5);">$ ${fmt(state.envio)}</td><td style="padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04);text-align:right;font-family:var(--fd);font-weight:700;color:#4A72FF;">$ ${fmt(state.envio)}</td></tr>`;
+
+  document.getElementById('cot-preview').innerHTML = `
+    <div style="background:var(--bgd);padding:24px 28px;display:flex;justify-content:space-between;align-items:flex-start;">
+      <div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+          <svg width="30" height="19" viewBox="0 0 30 19" fill="none"><path d="M 7 1 C 1 1 0 6 0 9.5 C 0 13 1 18 7 18" stroke="#EEF2FF" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M 23 1 C 29 1 30 6 30 9.5 C 30 13 29 18 23 18" stroke="#4A72FF" stroke-width="2" fill="none" stroke-linecap="round"/><line x1="7" y1="9.5" x2="23" y2="9.5" stroke="#1847F0" stroke-width="1" stroke-dasharray="2.5 3.5"/><circle cx="15" cy="9.5" r="2.8" fill="#4A72FF"/></svg>
+          <div><div style="font-family:var(--fd);font-size:16px;font-weight:800;color:#fff;letter-spacing:4px;">ZYGOS</div><div style="font-size:8px;color:#4A72FF;letter-spacing:2px;">ACCESS CONTROL SOLUTIONS</div></div>
+        </div>
+      </div>
+      <div style="text-align:right;font-size:11px;color:rgba(255,255,255,.4);line-height:1.8;">
+        <div style="color:#fff;font-weight:700;font-size:12px;">COTIZACIÓN</div>
+        <div style="color:rgba(255,255,255,.4);font-size:10px;">RUT: 78.441.825-1</div>
+        <div>contacto@zygos.cl</div>
+        <div>+56 9 7137 0313</div>
+        <div>Borinquen N°2 Dpto R33, Viña del Mar</div>
+        <div style="color:#4A72FF;">zygos.cl</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(255,255,255,.05);">
+      ${[['N° COTIZACIÓN',c.nro||'—'],['FECHA',date],['VALIDEZ',val],['INSTALACIÓN',plazo]].map((m,i)=>`<div style="background:var(--bgd2);padding:11px 16px;"><div style="font-size:8px;color:#4A72FF;letter-spacing:2px;margin-bottom:3px;">${m[0]}</div><div style="font-size:12px;font-weight:600;color:#fff;">${m[1]}</div></div>`).join('')}
+    </div>
+    <div style="padding:20px 28px;border-bottom:1px solid rgba(255,255,255,.06);">
+      <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:12px;">Datos del Cliente</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div style="font-size:12px;color:rgba(255,255,255,.6);line-height:1.7;"><strong style="display:block;color:#fff;margin-bottom:2px;">Empresa</strong>${c.nombre||'—'}<br>RUT: ${c.rut||'—'}<br>${c.dir||''}${c.ciudad?', '+c.ciudad:''}</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.6);line-height:1.7;"><strong style="display:block;color:#fff;margin-bottom:2px;">Contacto</strong>${c.contacto||'—'}${c.cargo?' · '+c.cargo:''}<br>${c.email||''}<br>${c.phone||''}</div>
+      </div>
+    </div>
+    <div style="padding:20px 28px;">
+      <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:14px;">Detalle de Productos y Servicios</div>
+      <table style="width:100%;border-collapse:collapse;">
+        <thead><tr>
+          <th style="text-align:left;padding:9px 12px;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.3);border-bottom:1px solid rgba(255,255,255,.06);">Descripción</th>
+          <th style="text-align:center;padding:9px 12px;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.3);border-bottom:1px solid rgba(255,255,255,.06);width:60px;">Cant.</th>
+          <th style="text-align:right;padding:9px 12px;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.3);border-bottom:1px solid rgba(255,255,255,.06);width:110px;">P. Unit.</th>
+          <th style="text-align:right;padding:9px 12px;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.3);border-bottom:1px solid rgba(255,255,255,.06);width:110px;">Total</th>
+        </tr></thead>
+        <tbody>${itemsHtml||'<tr><td colspan="4" style="text-align:center;padding:20px;color:rgba(255,255,255,.3);">Sin productos agregados</td></tr>'}</tbody>
+      </table>
+    </div>
+    <div style="padding:0 28px 20px;display:flex;justify-content:flex-end;">
+      <div style="min-width:280px;">
+        <div style="display:flex;justify-content:space-between;padding:7px 0;font-size:12px;border-bottom:1px solid rgba(255,255,255,.05);"><span style="color:rgba(255,255,255,.4);">Subtotal neto</span><span style="color:rgba(255,255,255,.7);font-weight:600;">$ ${fmt(sub)}</span></div>
+        ${disc>0?`<div style="display:flex;justify-content:space-between;padding:7px 0;font-size:12px;border-bottom:1px solid rgba(255,255,255,.05);"><span style="color:rgba(255,255,255,.4);">Descuento</span><span style="color:#4ADE80;font-weight:600;">-$ ${fmt(disc)}</span></div>`:''}
+        ${state.envio>0?`<div style="display:flex;justify-content:space-between;padding:7px 0;font-size:12px;border-bottom:1px solid rgba(255,255,255,.05);"><span style="color:rgba(255,255,255,.4);">🚚 Envío</span><span style="color:rgba(255,255,255,.7);font-weight:600;">$ ${fmt(state.envio)}</span></div>`:''}
+        <div style="display:flex;justify-content:space-between;padding:7px 0;font-size:12px;border-bottom:1px solid rgba(255,255,255,.05);"><span style="color:rgba(255,255,255,.4);">IVA (19%)</span><span style="color:rgba(255,255,255,.7);font-weight:600;">$ ${fmt(iva)}</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:rgba(24,71,240,.15);border:1px solid rgba(24,71,240,.25);margin-top:8px;"><span style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#4A72FF;">Total CLP</span><span style="font-family:var(--fd);font-size:20px;font-weight:800;color:#fff;">$ ${fmt(tot)}</span></div>
+      </div>
+    </div>
+    <div style="padding:16px 28px;border-top:1px solid rgba(255,255,255,.06);">
+      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:8px;">Forma de Pago</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.6);">${fp}</div>
+      ${selConds.length?`<div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.3);margin:14px 0 8px;">Condiciones Incluidas</div><div style="display:flex;flex-wrap:wrap;gap:6px;">${selConds.map(x=>`<span style="padding:4px 10px;border:1px solid rgba(24,71,240,.3);font-size:11px;color:#4A72FF;">${x.icon} ${x.label}</span>`).join('')}</div>`:''}
+      ${notas?`<div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.3);margin:14px 0 6px;">Observaciones</div><div style="font-size:12px;color:rgba(255,255,255,.5);">${notas}</div>`:''}
+    </div>
+    <div style="padding:16px 28px;background:var(--bgd);display:flex;justify-content:space-between;align-items:center;">
+      <div><div style="font-family:var(--fd);font-size:14px;font-weight:800;letter-spacing:3px;color:#4A72FF;">ZYGOS</div><div style="font-size:10px;color:rgba(255,255,255,.25);font-style:italic;">El equilibrio que conecta</div></div>
+      <div style="text-align:center;"><div style="width:160px;height:1px;background:rgba(255,255,255,.12);margin:0 auto 5px;"></div><div style="font-size:10px;color:rgba(255,255,255,.3);">Firma y aprobación · Fecha: ___________</div></div>
+      <div style="text-align:right;font-size:11px;color:rgba(255,255,255,.35);line-height:1.8;"><div>contacto@zygos.cl</div><div>+56 9 7137 0313</div><div style="color:#4A72FF;">zygos.cl</div></div>
+    </div>
+  `;
+}
+
+// ═══ PDF — FONDO BLANCO PROFESIONAL ═══
+function downloadPDF() {
+  updateClient();
+  const c=state.client, sub=getSubtotal(), disc=getDiscount(sub), base=sub-disc;
+  const iva=Math.round(base*0.19), tot=base+iva, env=state.envio||0;
+  const F=n=>{ try{return '$ '+Math.round(n).toLocaleString('es-CL');}catch{return '$ 0';} };
+
+  const items=[];
+  Object.entries(state.cart).forEach(([id,qty])=>{const p=products.find(x=>x.id===id);if(!p)return;const cat=p.categoria==='fitness'?'Fitness':p.categoria==='edificio'?'Edificios':'Software';items.push({cat,name:p.nombre,qty,price:p.precio_clp,total:p.precio_clp*qty,included:false});});
+  Object.keys(state.services).forEach(id=>{const sv=services.find(x=>x.id===id);if(!sv)return;const price=state.svcPrice?.[id]!==undefined?state.svcPrice[id]:sv.precio_clp;const qty=state.svcQty?.[id]||1;items.push({cat:'Servicio',name:sv.nombre,qty,price,total:price*qty,included:price===0});});
+
+  const validez=document.getElementById('validez')?.value||'30 días';
+  const plazo=document.getElementById('plazo')?.value||'72 horas hábiles';
+  const fp=document.getElementById('forma-pago')?.value||'—';
+  const notas=document.getElementById('notas')?.value||'';
+  const condNames=conditions.filter(x=>state.conditions[x.id]).map(x=>`${x.icon} ${x.label}`);
+
+  const itemRows = items.map((it,i)=>`
+    <tr style="background:${i%2===0?'#fff':'#F8FAFF'};">
+      <td style="padding:9px 12px;border-bottom:1px solid #E8EDF8;vertical-align:top;">
+        <span style="display:block;font-size:8px;color:#1847F0;letter-spacing:1px;text-transform:uppercase;font-weight:700;margin-bottom:2px;">${it.cat}</span>
+        <span style="font-size:12px;font-weight:700;color:#0D1228;">${it.name}</span>
+      </td>
+      <td style="padding:9px 12px;border-bottom:1px solid #E8EDF8;text-align:center;font-size:12px;color:#5E6E92;vertical-align:middle;">${it.qty}</td>
+      <td style="padding:9px 12px;border-bottom:1px solid #E8EDF8;text-align:right;font-size:12px;color:#5E6E92;vertical-align:middle;">${it.included?'—':F(it.price)}</td>
+      <td style="padding:9px 12px;border-bottom:1px solid #E8EDF8;text-align:right;font-size:12px;font-weight:700;color:${it.included?'#16A34A':'#0D1228'};vertical-align:middle;">${it.included?'✓ Incluido':F(it.total)}</td>
+    </tr>`).join('');
+
+  const envRow = env>0?`<tr style="background:#F8FAFF;"><td style="padding:9px 12px;border-bottom:1px solid #E8EDF8;vertical-align:top;"><span style="display:block;font-size:8px;color:#1847F0;letter-spacing:1px;text-transform:uppercase;font-weight:700;margin-bottom:2px;">Logística</span><span style="font-size:12px;font-weight:700;color:#0D1228;">Envío / Traslado</span></td><td style="padding:9px 12px;border-bottom:1px solid #E8EDF8;text-align:center;color:#5E6E92;">1</td><td style="padding:9px 12px;border-bottom:1px solid #E8EDF8;text-align:right;color:#5E6E92;">${F(env)}</td><td style="padding:9px 12px;border-bottom:1px solid #E8EDF8;text-align:right;font-weight:700;color:#0D1228;">${F(env)}</td></tr>`:'';
+
+  const discRow = disc>0?`<tr style="background:#F8FAFF;"><td style="padding:6px 12px;font-size:11px;color:#5E6E92;border-bottom:1px solid #E8EDF8;">Descuento</td><td style="padding:6px 12px;text-align:right;font-size:11px;font-weight:700;color:#16A34A;border-bottom:1px solid #E8EDF8;">−${F(disc)}</td></tr>`:'';
+  const envTot  = env>0?`<tr style="background:#F8FAFF;"><td style="padding:6px 12px;font-size:11px;color:#5E6E92;border-bottom:1px solid #E8EDF8;">Envío</td><td style="padding:6px 12px;text-align:right;font-size:11px;color:#5E6E92;border-bottom:1px solid #E8EDF8;">${F(env)}</td></tr>`:'';
+
+  const condHtml = condNames.map(cd=>`<span style="display:inline-block;margin:3px 3px 3px 0;padding:4px 10px;background:#EEF2FF;border:1px solid #C8D0E8;border-radius:4px;font-size:10px;font-weight:600;color:#1847F0;">${cd}</span>`).join('');
+  const notasHtml = notas?`<div style="margin-top:12px;padding:10px 12px;background:#FFFBEB;border-left:3px solid #D97706;"><div style="font-size:8px;font-weight:700;color:#D97706;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Observaciones</div><div style="font-size:11px;color:#5E6E92;line-height:1.6;">${notas}</div></div>`:'';
+
+  const nro=c.nro||'ZYG-2026-001', fecha=new Date().toLocaleDateString('es-CL');
+
+  const html=`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title></title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;background:#fff;color:#1a1a2e;font-size:11px;line-height:1.4;}
+@page{size:A4;margin:14mm 16mm;}
+@media print{
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
+  .no-print{display:none!important;}
+  body{font-size:10.5px;}
+}
+/* HEADER */
+.doc-header{width:100%;border-collapse:collapse;margin-bottom:0;}
+.header-logo-cell{padding:16px 0 14px;width:55%;vertical-align:top;}
+.logo-company{font-size:22px;font-weight:900;letter-spacing:5px;color:#1847F0;margin-bottom:2px;}
+.logo-tagline{font-size:8px;letter-spacing:2px;color:#5E6E92;text-transform:uppercase;margin-bottom:8px;}
+.logo-info{font-size:9px;color:#8896B4;line-height:1.8;}
+.header-doc-cell{padding:16px 0 14px;width:45%;vertical-align:top;text-align:right;}
+.doc-title{font-size:26px;font-weight:900;letter-spacing:2px;color:#1a1a2e;margin-bottom:6px;}
+.doc-number{font-size:13px;font-weight:700;color:#1847F0;margin-bottom:10px;}
+.doc-date{font-size:10px;color:#5E6E92;}
+/* DIVIDER */
+.divider{height:3px;background:linear-gradient(90deg,#1847F0 0%,#4A72FF 60%,#EEF2FF 100%);margin:0 0 14px;}
+/* INFO BOXES */
+.info-table{width:100%;border-collapse:collapse;margin-bottom:14px;}
+.info-box{padding:12px 14px;border:1px solid #DDE3F0;vertical-align:top;}
+.info-box-header{font-size:8px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#1847F0;border-bottom:1px solid #EEF2FF;padding-bottom:6px;margin-bottom:8px;}
+.info-label{font-size:8.5px;color:#8896B4;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:1px;}
+.info-value{font-size:11px;color:#1a1a2e;font-weight:600;margin-bottom:6px;}
+.info-value.big{font-size:13px;font-weight:800;}
+/* ITEMS TABLE */
+.items-table{width:100%;border-collapse:collapse;margin-bottom:14px;}
+.items-table thead tr{background:#1847F0;}
+.items-table thead th{padding:9px 12px;font-size:8.5px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#fff;text-align:left;}
+.items-table thead th.right{text-align:right;}
+.items-table thead th.center{text-align:center;}
+.items-table tbody tr.even{background:#F8FAFF;}
+.items-table tbody tr.odd{background:#fff;}
+.items-table tbody td{padding:9px 12px;border-bottom:1px solid #EEF2FF;vertical-align:middle;color:#2A3252;}
+.items-table tbody td.right{text-align:right;}
+.items-table tbody td.center{text-align:center;}
+.item-cat{font-size:8px;color:#1847F0;letter-spacing:1px;text-transform:uppercase;font-weight:700;display:block;margin-bottom:2px;}
+.item-name{font-size:11px;font-weight:700;color:#1a1a2e;}
+.item-code{font-size:9px;color:#8896B4;margin-top:1px;}
+.amount{font-weight:700;color:#1a1a2e;}
+.amount.included{color:#16A34A;font-weight:700;}
+.amount.discount{color:#16A34A;}
+/* TOTALS */
+.totals-table{width:100%;border-collapse:collapse;}
+.totals-table td{padding:6px 12px;border-bottom:1px solid #EEF2FF;font-size:11px;}
+.totals-table .lbl{color:#5E6E92;}
+.totals-table .val{text-align:right;font-weight:600;color:#1a1a2e;}
+.totals-table tr.total-row td{background:#1847F0;color:#fff;padding:11px 12px;border:none;}
+.totals-table tr.total-row .lbl{color:rgba(255,255,255,.8);font-size:9px;letter-spacing:2px;text-transform:uppercase;font-weight:700;}
+.totals-table tr.total-row .val{font-size:17px;font-weight:900;color:#fff;}
+/* FOOTER BOXES */
+.footer-table{width:100%;border-collapse:collapse;margin-bottom:14px;margin-top:14px;}
+.footer-box{padding:12px 14px;border:1px solid #DDE3F0;vertical-align:top;}
+.footer-box-title{font-size:8px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#1847F0;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid #EEF2FF;}
+.cond-tag{display:inline-block;margin:2px 2px 2px 0;padding:3px 9px;background:#EEF2FF;border:1px solid #C8D0E8;border-radius:3px;font-size:9px;font-weight:600;color:#1847F0;}
+/* EXECUTIVE */
+.exec-table{width:100%;border-collapse:collapse;border-top:1px solid #DDE3F0;padding-top:12px;}
+.exec-cell{padding:12px 0 0;vertical-align:top;}
+.exec-label{font-size:8px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#8896B4;margin-bottom:4px;}
+.exec-name{font-size:11px;font-weight:700;color:#1a1a2e;}
+.exec-contact{font-size:10px;color:#5E6E92;margin-top:2px;}
+/* FIRMA */
+.firma-box{border-top:1px solid #1a1a2e;width:180px;margin-top:24px;padding-top:5px;font-size:9px;color:#5E6E92;text-align:center;}
+/* DOC FOOTER */
+.doc-footer{background:#F8FAFF;border-top:3px solid #1847F0;padding:10px 0;margin-top:14px;display:flex;justify-content:space-between;align-items:center;}
+.footer-brand{font-size:16px;font-weight:900;letter-spacing:4px;color:#1847F0;}
+.footer-slogan{font-size:8px;color:#8896B4;margin-top:1px;}
+.footer-contact{font-size:9px;color:#5E6E92;text-align:right;line-height:1.8;}
+/* PRINT BAR */
+.print-bar{background:#1847F0;color:#fff;padding:11px 18px;display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.print-btn{padding:8px 20px;background:#fff;color:#1847F0;border:none;font-weight:800;font-size:12px;cursor:pointer;border-radius:4px;}
+</style></head><body>
+
+<div class="print-bar no-print">
+  <div>
+    <div style="font-weight:800;font-size:13px;">ZYGOS — Cotización ${nro}</div>
+    <div style="font-size:11px;opacity:.8;">${c.nombre||'Cliente'} · ${fecha}</div>
+  </div>
+  <button class="print-btn" onclick="document.title='';window.print();">⬇ Guardar como PDF</button>
+</div>
+
+<!-- ═══ HEADER ═══ -->
+<table class="doc-header" cellpadding="0" cellspacing="0">
+<tr>
+  <td class="header-logo-cell">
+    <div class="logo-company">ZYGOS</div>
+    <div class="logo-tagline">Access Control Solutions</div>
+    <div class="logo-info">
+      RUT: 78.441.825-1<br>
+      Borinquen N°2 Dpto R33, Viña del Mar, Chile<br>
+      +56 9 7137 0313 · contacto@zygos.cl · zygos.cl
+    </div>
+  </td>
+  <td class="header-doc-cell">
+    <div class="doc-title">COTIZACIÓN</div>
+    <div class="doc-number">N° ${nro}</div>
+    <div class="doc-date">${c.ciudad||'Chile'}, ${fecha}</div>
+  </td>
+</tr>
+</table>
+
+<div class="divider"></div>
+
+<!-- ═══ DATOS CLIENTE ═══ -->
+<table class="info-table" cellpadding="0" cellspacing="0">
+<tr>
+  <td class="info-box" style="width:33%;border-right:none;">
+    <div class="info-box-header">Cliente</div>
+    <div class="info-label">Empresa / Razón Social</div>
+    <div class="info-value big">${c.nombre||'—'}</div>
+    <div class="info-label">RUT Cliente</div>
+    <div class="info-value">${c.rut||'—'}</div>
+  </td>
+  <td class="info-box" style="width:33%;border-right:none;">
+    <div class="info-box-header">Contacto</div>
+    <div class="info-label">Nombre</div>
+    <div class="info-value">${c.contacto||'—'}${c.cargo?' · '+c.cargo:''}</div>
+    <div class="info-label">Teléfono</div>
+    <div class="info-value">${c.phone||'—'}</div>
+    <div class="info-label">Email</div>
+    <div class="info-value">${c.email||'—'}</div>
+  </td>
+  <td class="info-box" style="width:34%;">
+    <div class="info-box-header">Oferta</div>
+    <div class="info-label">N° Cotización</div>
+    <div class="info-value">${nro}</div>
+    <div class="info-label">Validez de oferta</div>
+    <div class="info-value">${validez}</div>
+    <div class="info-label">Plazo de entrega estimado</div>
+    <div class="info-value">${plazo}</div>
+  </td>
+</tr>
+</table>
+
+<!-- ═══ DIRECCIÓN ═══ -->
+${(c.dir||c.ciudad)?`<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:14px;">
+<tr><td style="padding:8px 14px;border:1px solid #DDE3F0;background:#F8FAFF;">
+  <span style="font-size:8px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#8896B4;">Dirección  </span>
+  <span style="font-size:11px;color:#2A3252;">${[c.dir,c.ciudad].filter(Boolean).join(', ')}</span>
+</td></tr></table>`:''}
+
+<!-- ═══ TABLA DE ITEMS ═══ -->
+<table class="items-table" cellpadding="0" cellspacing="0">
+<thead><tr>
+  <th style="width:40%;">IT</th>
+  <th style="width:10%;" class="center">Cant.</th>
+  <th style="width:8%;" class="center">UM</th>
+  <th style="width:14%;" class="right">P.U. Neto</th>
+  <th style="width:10%;" class="right">Dcto.</th>
+  <th style="width:18%;" class="right">Subtotal</th>
+</tr></thead>
+<tbody>
+${items.map((it,i)=>{
+  const dcto = it.included ? '—' : (disc>0 && state.discType==='pct' ? Math.round(it.price*(parseFloat(document.getElementById('disc-val')?.value||0)/100)).toLocaleString('es-CL') : '—');
+  const pUnit = it.included ? 'Incluido' : ('$ '+it.price.toLocaleString('es-CL'));
+  const total = it.included ? 'Incluido' : ('$ '+it.total.toLocaleString('es-CL'));
+  return `<tr class="${i%2===0?'odd':'even'}">
+    <td>
+      <span class="item-cat">${it.cat}</span>
+      <span class="item-name">${it.name}</span>
+    </td>
+    <td class="center">${it.qty}</td>
+    <td class="center" style="color:#8896B4;">UN</td>
+    <td class="right" style="color:#2A3252;">${pUnit}</td>
+    <td class="right" style="color:#8896B4;">—</td>
+    <td class="right"><span class="${it.included?'amount included':'amount'}">${total}</span></td>
+  </tr>`;
+}).join('')}
+${env>0?`<tr class="${items.length%2===0?'odd':'even'}">
+  <td><span class="item-cat">Logística</span><span class="item-name">Envío / Traslado</span></td>
+  <td class="center">1</td><td class="center" style="color:#8896B4;">GL</td>
+  <td class="right">$ ${env.toLocaleString('es-CL')}</td><td class="right" style="color:#8896B4;">—</td>
+  <td class="right"><span class="amount">$ ${env.toLocaleString('es-CL')}</span></td>
+</tr>`:''}
+${items.length===0?`<tr><td colspan="6" style="padding:20px;text-align:center;color:#8896B4;">Sin productos agregados</td></tr>`:''}
+</tbody>
+</table>
+
+<!-- ═══ TOTALES + PIE ═══ -->
+<table width="100%" cellpadding="0" cellspacing="0">
+<tr>
+  <!-- EJECUTIVO + PAGO -->
+  <td style="width:58%;vertical-align:top;padding-right:16px;">
+
+    <!-- Forma de pago -->
+    <div class="footer-box-title" style="font-size:8px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#1847F0;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid #EEF2FF;">Forma de Pago</div>
+    <div style="font-size:11px;color:#2A3252;margin-bottom:10px;">${fp}</div>
+
+    <!-- Condiciones -->
+    ${condNames.length?`<div class="footer-box-title" style="font-size:8px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#1847F0;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid #EEF2FF;">Condiciones Incluidas</div>
+    <div style="margin-bottom:10px;">${condNames.map(cd=>`<span class="cond-tag">${cd}</span>`).join('')}</div>`:''}
+
+    <!-- Notas -->
+    ${notas?`<div class="footer-box-title" style="font-size:8px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#D97706;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid #FEF3C7;">Observaciones</div>
+    <div style="font-size:11px;color:#5E6E92;line-height:1.6;padding:8px 10px;background:#FFFBEB;border-left:3px solid #D97706;">${notas}</div>`:''}
+
+    <!-- Ejecutivo -->
+    <table style="width:100%;margin-top:16px;" cellpadding="0" cellspacing="0">
+    <tr>
+      <td style="padding-top:12px;border-top:1px solid #DDE3F0;">
+        <div style="font-size:8px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#8896B4;margin-bottom:5px;">Ejecutivo Comercial</div>
+        <div style="font-size:12px;font-weight:800;color:#1a1a2e;">ZYGOS SpA</div>
+        <div style="font-size:10px;color:#5E6E92;margin-top:2px;">contacto@zygos.cl · +56 9 7137 0313</div>
+        <div style="font-size:10px;color:#1847F0;margin-top:1px;">zygos.cl</div>
+      </td>
+    </tr>
+    </table>
+
+  </td>
+
+  <!-- TOTALES -->
+  <td style="width:42%;vertical-align:top;">
+    <table class="totals-table" cellpadding="0" cellspacing="0" style="width:100%;">
+      <tr><td class="lbl">NETO</td><td class="val">$ ${sub.toLocaleString('es-CL')}</td></tr>
+      ${disc>0?`<tr><td class="lbl" style="color:#16A34A;">Descuento</td><td class="val" style="color:#16A34A;">− $ ${disc.toLocaleString('es-CL')}</td></tr>`:''}
+      ${env>0?`<tr><td class="lbl">Envío</td><td class="val">$ ${env.toLocaleString('es-CL')}</td></tr>`:''}
+      <tr><td class="lbl">IVA (19%)</td><td class="val">$ ${iva.toLocaleString('es-CL')}</td></tr>
+      <tr class="total-row"><td class="lbl">TOTAL</td><td class="val">$ ${tot.toLocaleString('es-CL')}</td></tr>
+    </table>
+
+    <!-- Firma -->
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid #DDE3F0;">
+      <div style="font-size:8px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#8896B4;margin-bottom:20px;">Aprobación del Cliente</div>
+      <div style="border-top:1px solid #1a1a2e;width:100%;margin-bottom:5px;"></div>
+      <div style="font-size:9px;color:#8896B4;">Firma · Nombre · Fecha</div>
+      <div style="margin-top:12px;font-size:8px;color:#8896B4;">RUT Cliente: ${c.rut||'_______________'}</div>
+    </div>
+  </td>
+</tr>
+</table>
+
+<!-- ═══ DOC FOOTER ═══ -->
+<table width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;border-top:3px solid #1847F0;background:#F8FAFF;">
+<tr>
+  <td style="padding:10px 0;">
+    <div style="font-size:18px;font-weight:900;letter-spacing:5px;color:#1847F0;">ZYGOS</div>
+    <div style="font-size:8px;color:#8896B4;margin-top:1px;">El equilibrio que conecta</div>
+  </td>
+  <td style="text-align:center;padding:10px 0;">
+    <div style="font-size:9px;color:#8896B4;line-height:1.8;">
+      Control de Acceso Inteligente · Instalación en 72h · Garantía 12 meses
+    </div>
+  </td>
+  <td style="text-align:right;padding:10px 0;">
+    <div style="font-size:9px;color:#5E6E92;line-height:1.8;">
+      contacto@zygos.cl<br>+56 9 7137 0313<br>
+      <span style="color:#1847F0;font-weight:700;">zygos.cl</span>
+    </div>
+  </td>
+</tr>
+</table>
+
+</body></html>`;
+
+  const w=window.open('','_blank','width=900,height=800');
+  if(!w){alert('Permite ventanas emergentes en este sitio e intenta de nuevo.');return;}
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+  w.focus();
+  // Limpia el título para que el navegador no lo muestre en el PDF
+  setTimeout(()=>{
+    w.document.title = '';
+    w.print();
+  }, 700);
+}
+
+// ═══ WHATSAPP / EMAIL ═══
+function sendWhatsApp() {
+  updateClient();
+  const c=state.client, sub=getSubtotal(), disc=getDiscount(sub), base=sub-disc;
+  const iva=Math.round(base*0.19), tot=base+iva;
+  const items=Object.entries(state.cart).map(([id,qty])=>{const p=products.find(x=>x.id===id);return p?`• ${p.nombre} x${qty} = $ ${fmt(p.precio_clp*qty)}`:''}).filter(Boolean).join('\n');
+  const linkLine = savedQuote ? `\n💳 Paga en línea: https://zygos.cl/pagar.html?id=${savedQuote.id}\n` : '';
+  const msg=encodeURIComponent(`Hola ${c.nombre||'cliente'},\n\nCotización ZYGOS ${c.nro||'ZYG'}:\n\n${items}\n${state.envio>0?`• 🚚 Envío: $ ${fmt(state.envio)}\n`:''}\nTOTAL: $ ${fmt(tot)} CLP (IVA incluido)\nVálida ${document.getElementById('validez')?.value||'30 días'}.\n${linkLine}\n— ZYGOS\n+56 9 7137 0313 | contacto@zygos.cl`);
+  window.open(`https://wa.me/${c.phone?.replace(/\D/g,'')||'56971370313'}?text=${msg}`,'_blank');
+}
+
+function sendEmail() {
+  updateClient();
+  const c=state.client, sub=getSubtotal(), disc=getDiscount(sub), base=sub-disc;
+  const iva=Math.round(base*0.19), tot=base+iva;
+  const linkLine = savedQuote ? `\nPaga en línea: https://zygos.cl/pagar.html?id=${savedQuote.id}\n` : '';
+  const subj=encodeURIComponent(`Cotización ZYGOS ${c.nro||'ZYG'} — ${c.nombre||''}`);
+  const body=encodeURIComponent(`Estimado/a ${c.contacto||'cliente'},\n\nTotal: $ ${fmt(tot)} CLP (IVA incluido)\nVálida: ${document.getElementById('validez')?.value||'30 días'}\n${linkLine}\n— ZYGOS\ncontacto@zygos.cl | +56 9 7137 0313`);
+  window.location.href=`mailto:${c.email||'contacto@zygos.cl'}?subject=${subj}&body=${body}`;
+}
+
+function nuevaCotizacion() {
+  if(!confirm('¿Nueva cotización? Se perderán los datos actuales.')) return;
+  state={step:1,client:{},cart:{},services:{},svcQty:{},svcPrice:{},envio:0,conditions:{c1:true,c3:true,c4:true,c6:true},discType:'pct',discVal:0,sector:'todos',selectedClientId:null};
+  savedQuote = null;
+  document.querySelectorAll('.fi').forEach(f=>{if(f.tagName!=='SELECT')f.value='';});
+  document.getElementById('c-nro').value=nuevoNro();
+  const linkBox=document.getElementById('payment-link-box'); if(linkBox) linkBox.style.display='none';
+  const saveBox=document.getElementById('save-quote-box'); if(saveBox) saveBox.style.display='block';
+  const saveBtn=document.getElementById('save-quote-btn'); if(saveBtn){ saveBtn.disabled=false; saveBtn.textContent='💾 Guardar cotización y generar link de pago'; }
+  const linkStatus=document.getElementById('client-link-status'); if(linkStatus) linkStatus.style.display='none';
+  renderCatalog(); renderServices(); renderConditions(); updateResumen(); updateTotals(); goStep(1);
+}
+
+// ═══ GUARDAR COTIZACIÓN (Supabase) ═══
+async function guardarCotizacion() {
+  updateClient();
+  const errBox = document.getElementById('save-quote-error');
+  errBox.style.display = 'none';
+
+  if (isReadOnly) {
+    errBox.textContent = '🔒 Tu rol (técnico) es solo de lectura: no puedes guardar cotizaciones.';
+    errBox.style.display = 'block';
+    return;
+  }
+  if (!state.client.nombre) {
+    errBox.textContent = '⚠️ Completa al menos el nombre/razón social del cliente (paso 1) antes de guardar.';
+    errBox.style.display = 'block';
+    goStep(1);
+    return;
+  }
+
+  const btn = document.getElementById('save-quote-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Guardando…';
+
+  try {
+    const c = state.client;
+    const sub = getSubtotal(), rawDisc = parseFloat(document.getElementById('disc-val')?.value||0)||0;
+    const disc = getDiscount(sub), base = sub - disc;
+    const iva = Math.round(base*0.19), tot = base + iva;
+
+    const items = Object.entries(state.cart).map(([id,qty]) => {
+      const p = products.find(x=>x.id===id);
+      if (!p) return null;
+      return { product_id: p.id, nombre: p.nombre, precio_clp: p.precio_clp, cantidad: qty, subtotal: p.precio_clp*qty };
+    }).filter(Boolean);
+
+    const svcItems = Object.keys(state.services).map(id => {
+      const sv = services.find(x=>x.id===id);
+      if (!sv) return null;
+      const price = state.svcPrice?.[id] !== undefined ? state.svcPrice[id] : sv.precio_clp;
+      const qty = state.svcQty?.[id] || 1;
+      return { service_id: sv.id, nombre: sv.nombre, precio_clp: price, cantidad: qty, subtotal: price*qty };
+    }).filter(Boolean);
+
+    const clientSnapshot = {
+      nombre: c.contacto || '', empresa: c.nombre || '', rut: c.rut || '',
+      email: c.email || '', phone: c.phone || '', direccion: c.dir || '', ciudad: c.ciudad || '',
+    };
+
+    const nro = c.nro || nuevoNro();
+
+    const payload = {
+      nro,
+      client_id: state.selectedClientId || null,
+      client_snapshot: clientSnapshot,
+      items,
+      services: svcItems,
+      envio_clp: state.envio || 0,
+      descuento_tipo: state.discType,
+      descuento_valor: rawDisc,
+      subtotal_clp: sub,
+      iva_clp: iva,
+      total_clp: tot,
+      condiciones: conditions.filter(x => state.conditions[x.id]),
+      forma_pago: document.getElementById('forma-pago')?.value || null,
+      validez: document.getElementById('validez')?.value || null,
+      plazo_instalacion: document.getElementById('plazo')?.value || null,
+      notas: document.getElementById('notas')?.value || null,
+      estado: 'enviada',
+      created_by: currentSession.user.id,
+    };
+
+    const { data, error } = await sb.from('quotes').insert(payload).select().single();
+    if (error) throw error;
+
+    savedQuote = { id: data.id, nro: data.nro };
+    const link = `https://zygos.cl/pagar.html?id=${data.id}`;
+    document.getElementById('payment-link-input').value = link;
+    document.getElementById('payment-link-box').style.display = 'block';
+    btn.textContent = '✅ Cotización guardada';
+    toast('✅ Cotización '+data.nro+' guardada correctamente');
+    loadQuotesHistory();
+  } catch (e) {
+    console.error(e);
+    errBox.textContent = '⚠️ No se pudo guardar la cotización: ' + (e.message || 'error desconocido. Intenta de nuevo.');
+    errBox.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = '💾 Guardar cotización y generar link de pago';
+  }
+}
+
+function copyPaymentLink() {
+  const input = document.getElementById('payment-link-input');
+  input.select();
+  try {
+    navigator.clipboard.writeText(input.value).then(()=>toast('📋 Link copiado al portapapeles'));
+  } catch (e) {
+    try { document.execCommand('copy'); toast('📋 Link copiado al portapapeles'); } catch(e2) { toast('⚠️ No se pudo copiar. Selecciona el texto manualmente.'); }
+  }
+}
+
+// ═══ HISTORIAL DE COTIZACIONES (Supabase) ═══
+async function loadQuotesHistory() {
+  const el = document.getElementById('history-list');
+  if (el) el.innerHTML = '<div class="hist-empty">⏳ Cargando cotizaciones…</div>';
+  const { data, error } = await sb.from('quotes')
+    .select('id, nro, client_id, client_snapshot, total_clp, estado, created_at, clients(nombre, empresa)')
+    .order('created_at', { ascending: false })
+    .limit(100);
+  if (error) {
+    if (el) el.innerHTML = `<div class="hist-empty">⚠️ No se pudo cargar el historial: ${error.message}</div>`;
+    quotesCache = [];
+    return;
+  }
+  quotesCache = data || [];
+  renderHistory();
+}
+
+function quoteClientLabel(x) {
+  return (x.clients && (x.clients.empresa || x.clients.nombre)) || (x.client_snapshot && x.client_snapshot.empresa) || 'Cliente sin nombre';
+}
+
+function populateHistFilter(){
+  const sel=document.getElementById('hist-filter-client');
+  if(!sel) return;
+  const clientNames=[...new Set(quotesCache.map(quoteClientLabel).filter(Boolean))].sort();
+  const prev=sel.value;
+  sel.innerHTML='<option value="">👥 Todos los clientes</option>'+
+    clientNames.map(c=>`<option value="${c}">${c}</option>`).join('');
+  if(prev) sel.value=prev;
+}
+
+function renderHistory(){
+  const el=document.getElementById('history-list'); if(!el)return;
+  populateHistFilter();
+  let h=quotesCache;
+  if(!h.length){
+    el.innerHTML='<div class="hist-empty">📋 Aún no hay cotizaciones guardadas.<br>Usa "Guardar cotización" para registrar la primera.</div>';
+    const sum=document.getElementById('hist-summary'); if(sum) sum.style.display='none';
+    return;
+  }
+  const clientFilter=document.getElementById('hist-filter-client')?.value||'';
+  if(clientFilter) h=h.filter(x=>quoteClientLabel(x)===clientFilter);
+  const sort=document.getElementById('hist-filter-sort')?.value||'reciente';
+  if(sort==='mayor') h=[...h].sort((a,b)=>b.total_clp-a.total_clp);
+  else if(sort==='menor') h=[...h].sort((a,b)=>a.total_clp-b.total_clp);
+
+  const sum=document.getElementById('hist-summary');
+  if(sum){
+    const totalMonto=h.reduce((s,x)=>s+(x.total_clp||0),0);
+    sum.style.display='flex';
+    sum.innerHTML=`
+      <div style="font-size:12px;color:var(--silver);">
+        <span style="font-family:var(--fd);font-size:15px;font-weight:800;color:var(--ink);">${h.length}</span>
+        cotización${h.length!==1?'es':''}${clientFilter?' de <strong>'+clientFilter+'</strong>':''}
+      </div>
+      <div style="font-size:12px;color:var(--silver);">
+        Total: <span style="font-family:var(--fd);font-size:15px;font-weight:800;color:var(--blue);">$ ${fmt(totalMonto)}</span> CLP
+      </div>
+      ${clientFilter?`<div style="font-size:12px;color:var(--silver);">
+        Promedio: <span style="font-family:var(--fd);font-size:13px;font-weight:700;color:var(--ink);">$ ${fmt(totalMonto/h.length)}</span>
+      </div>`:''}
+      ${clientFilter?`<button onclick="document.getElementById('hist-filter-client').value='';renderHistory();" style="margin-left:auto;padding:4px 10px;background:none;border:1px solid var(--line2);border-radius:6px;font-size:11px;color:var(--mist);cursor:pointer;">✕ Limpiar filtro</button>`:''}
+    `;
+  }
+  el.innerHTML=h.map(x=>{
+    const fecha = x.created_at ? new Date(x.created_at).toLocaleDateString('es-CL') : '';
+    const hora  = x.created_at ? new Date(x.created_at).toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'}) : '';
+    return `
+    <div class="hist-card">
+      <div style="font-size:22px;">📄</div>
+      <div class="hist-info">
+        <div class="hist-name">${quoteClientLabel(x)} <span style="font-weight:400;color:var(--mist);font-size:11px;">· ${x.nro}</span></div>
+        <div class="hist-meta">${fecha} ${hora} · ${x.estado||'—'}</div>
+      </div>
+      <div class="hist-total">$ ${fmt(x.total_clp)}<small>Total CLP</small></div>
+      <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0;">
+        <a href="pagar.html?id=${x.id}" target="_blank" style="text-align:center;padding:6px 12px;background:var(--bg3);border:1.5px solid var(--line2);color:var(--ink2);border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;text-decoration:none;">🔗 Link de pago</a>
+        <button onclick="duplicarCotizacion('${x.id}')"
+          style="padding:6px 12px;background:var(--bluelt);border:1.5px solid var(--blue3);color:var(--blue);border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s;">
+          📋 Duplicar
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function duplicarCotizacion(id) {
+  // Fetch full row (the cached list query doesn't include items/services jsonb)
+  const { data: orig, error } = await sb.from('quotes').select('*').eq('id', id).single();
+  if (error || !orig) { toast('⚠️ No se pudo cargar la cotización original.'); return; }
+  if(!confirm('¿Duplicar la cotización '+orig.nro+'?\n\nSe creará una nueva con los mismos datos. Podrás agregar o quitar productos antes de guardar.'))return;
+
+  state={
+    step:1,client:{},cart:{},services:{},svcQty:{},svcPrice:{},envio:orig.envio_clp||0,
+    conditions:{c1:true,c3:true,c4:true,c6:true},discType:orig.descuento_tipo||'pct',discVal:orig.descuento_valor||0,sector:'todos',
+    selectedClientId: orig.client_id || null,
+  };
+  savedQuote = null;
+
+  (orig.items||[]).forEach(it => { if (products.find(p=>p.id===it.product_id)) state.cart[it.product_id] = it.cantidad; });
+  (orig.services||[]).forEach(sv => {
+    if (services.find(s=>s.id===sv.service_id)) {
+      state.services[sv.service_id] = true;
+      state.svcQty[sv.service_id] = sv.cantidad;
+      state.svcPrice[sv.service_id] = sv.precio_clp;
+    }
+  });
+
+  const snap = orig.client_snapshot || {};
+  const nroNuevo = nuevoNro();
+  state.client={
+    nombre:   snap.empresa   ||'',
+    rut:      snap.rut       ||'',
+    contacto: snap.nombre    ||'',
+    cargo:    '',
+    email:    snap.email     ||'',
+    phone:    snap.phone     ||'',
+    dir:      snap.direccion ||'',
+    ciudad:   snap.ciudad    ||'',
+    nro:      nroNuevo,
+  };
+
+  const set=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val||'';};
+  set('c-nombre',   state.client.nombre);
+  set('c-rut',      state.client.rut);
+  set('c-contacto', state.client.contacto);
+  set('c-cargo',    state.client.cargo);
+  set('c-email',    state.client.email);
+  set('c-phone',    state.client.phone);
+  set('c-dir',      state.client.dir);
+  set('c-nro',      nroNuevo);
+  const cs=document.getElementById('c-ciudad');
+  if(cs){const opt=[...cs.options].find(o=>o.value===state.client.ciudad);if(opt)cs.value=opt.value;}
+  const discValEl=document.getElementById('disc-val'); if(discValEl) discValEl.value=state.discVal||0;
+  setDiscType(state.discType);
+
+  const linkBox=document.getElementById('payment-link-box'); if(linkBox) linkBox.style.display='none';
+  const saveBtn=document.getElementById('save-quote-btn'); if(saveBtn){ saveBtn.disabled=false; saveBtn.textContent='💾 Guardar cotización y generar link de pago'; }
+
+  renderCatalog(); renderServices(); renderConditions(); updateResumen(); updateTotals();
+  goStep(2);
+
+  setTimeout(()=>{ toast('📋 Duplicada como '+nroNuevo+' — revisa y agrega productos'); },300);
+}
+
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.transform='translateX(-50%) translateY(0)';setTimeout(()=>t.style.transform='translateX(-50%) translateY(60px)',3200);}
+function fmt(n){try{return Math.round(n).toLocaleString('es-CL');}catch{return '0';}}
+
+// ── SESSION AUTH GUARD (Supabase) ──
+function cotLogout(){
+  sb.auth.signOut().finally(()=>{ window.location.href='sistema.html'; });
+}
+
+async function checkCotAccess(){
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { location.href='sistema.html'; throw new Error('no-session'); }
+  currentSession = session;
+
+  const { data: profile, error } = await sb.from('profiles').select('*').eq('id', session.user.id).single();
+  if (error || !profile || profile.activo === false || profile.rol === 'cliente') {
+    await sb.auth.signOut();
+    location.href = 'sistema.html';
+    throw new Error('no-access');
+  }
+  currentProfile = profile;
+  isReadOnly = profile.rol === 'tecnico';
+
+  const info = document.getElementById('user-info');
+  if (info) info.innerHTML = `Conectado como <b style="color:#fff;">${profile.nombre||session.user.email}</b><br><span style="text-transform:uppercase;letter-spacing:1px;">${profile.rol}</span>`;
+
+  if (isReadOnly) {
+    const btn = document.getElementById('save-quote-btn');
+    if (btn) { btn.disabled = true; btn.textContent = '🔒 Solo lectura (rol técnico)'; btn.style.opacity = .6; btn.style.cursor = 'not-allowed'; }
+    const nc = document.getElementById('new-client-btn');
+    if (nc) { nc.disabled = true; nc.style.opacity = .5; nc.style.cursor = 'not-allowed'; }
+  }
+}
+
+// ── CLIENTES (Supabase, con búsqueda + alta rápida) ──
+function refreshClientDropdown(){
+  const sel=document.getElementById('client-dropdown');
+  if(!sel) return;
+  if(!allClients.length){
+    sel.innerHTML='<option value="">— Sin clientes registrados en el CRM —</option>';
+    return;
+  }
+  sel.innerHTML='<option value="">— Seleccionar cliente del CRM —</option>'+
+    allClients.map(c=>`<option value="${c.id}">${c.empresa||c.nombre} — ${c.nombre}${c.ciudad?' ('+c.ciudad+')':''}</option>`).join('');
+}
+
+function filterClientDropdown(term){
+  const sel=document.getElementById('client-dropdown');
+  if(!sel) return;
+  const t=(term||'').toLowerCase().trim();
+  const filtered = t ? allClients.filter(c=>(c.nombre||'').toLowerCase().includes(t) || (c.empresa||'').toLowerCase().includes(t)) : allClients;
+  if(!filtered.length){
+    sel.innerHTML='<option value="">— Sin resultados —</option>';
+    return;
+  }
+  sel.innerHTML='<option value="">— Seleccionar cliente del CRM —</option>'+
+    filtered.map(c=>`<option value="${c.id}">${c.empresa||c.nombre} — ${c.nombre}${c.ciudad?' ('+c.ciudad+')':''}</option>`).join('');
+}
+
+function loadClientFromDropdown(clientId){
+  if(!clientId){ state.selectedClientId=null; return; }
+  const c=allClients.find(x=>x.id===clientId);
+  if(!c) return;
+  const set=(id,val)=>{ const el=document.getElementById(id); if(el) el.value=val||''; };
+  set('c-nombre',  c.empresa||c.nombre);
+  set('c-rut',     c.rut);
+  set('c-contacto',c.nombre);
+  set('c-cargo',   c.cargo);
+  set('c-email',   c.email);
+  set('c-phone',   c.phone);
+  set('c-dir',     c.direccion);
+  const ciudadSel=document.getElementById('c-ciudad');
+  if(ciudadSel){
+    const opt=[...ciudadSel.options].find(o=>o.value===c.ciudad||o.text===c.ciudad);
+    if(opt) ciudadSel.value=opt.value; else if(c.ciudad) ciudadSel.value='Otra';
+  }
+  state.selectedClientId = c.id;
+  updateClient();
+  const dd=document.getElementById('client-dropdown');
+  if(dd){ dd.style.borderColor='var(--green)'; setTimeout(()=>{ dd.style.borderColor='var(--blue)'; },1500); }
+  const status=document.getElementById('client-link-status');
+  if(status){ status.style.display='block'; status.style.color='var(--green)'; status.textContent='✓ Cliente vinculado: '+(c.empresa||c.nombre); }
+}
+
+async function guardarClienteNuevo(){
+  updateClient();
+  const status=document.getElementById('client-link-status');
+  const c = state.client;
+  if(!c.contacto){
+    if(status){ status.style.display='block'; status.style.color='#DC2626'; status.textContent='⚠️ Ingresa al menos el nombre de contacto antes de guardar el cliente.'; }
+    return;
+  }
+  if (isReadOnly) {
+    if(status){ status.style.display='block'; status.style.color='#DC2626'; status.textContent='🔒 Tu rol no permite crear clientes.'; }
+    return;
+  }
+  const btn=document.getElementById('new-client-btn');
+  btn.disabled=true; const origText=btn.textContent; btn.textContent='⏳ Guardando…';
+  try{
+    const payload={
+      nombre: c.contacto, empresa: c.nombre||null, rut: c.rut||null, cargo: c.cargo||null,
+      email: c.email||null, phone: c.phone||null, direccion: c.dir||null, ciudad: c.ciudad||null,
+      created_by: currentSession.user.id,
+    };
+    const { data, error } = await sb.from('clients').insert(payload).select().single();
+    if(error) throw error;
+    allClients.unshift(data);
+    refreshClientDropdown();
+    const dd=document.getElementById('client-dropdown'); if(dd) dd.value=data.id;
+    state.selectedClientId = data.id;
+    if(status){ status.style.display='block'; status.style.color='var(--green)'; status.textContent='✅ Cliente creado y vinculado a esta cotización.'; }
+    toast('✅ Cliente guardado en el CRM');
+  }catch(e){
+    console.error(e);
+    if(status){ status.style.display='block'; status.style.color='#DC2626'; status.textContent='⚠️ No se pudo guardar el cliente: '+(e.message||'error desconocido'); }
+  }finally{
+    btn.disabled=false; btn.textContent=origText;
+  }
+}
+</script>
+</body>
+</html>
