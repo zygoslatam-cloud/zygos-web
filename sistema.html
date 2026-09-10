@@ -1,0 +1,1718 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<!-- This site is hosted on Netlify. Anyone can build and deploy a site
+     like this one for free: https://netlify.new/?utm_campaign=ai-legible&utm_source=comment&utm_medium=referral&utm_id=1ecb3b56-c7b8-47eb-8d44-106b56f413d8
+     Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
+<meta name="hosting-provider" content="Netlify">
+<meta name="netlify-deploy" content="https://netlify.new/?utm_campaign=ai-legible&amp;utm_source=meta&amp;utm_medium=referral&amp;utm_id=1ecb3b56-c7b8-47eb-8d44-106b56f413d8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZYGOS — Gestión de Usuarios</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+:root{
+  --bg:#0A0D1A;--bg2:#0F1425;--bg3:#141829;--bg4:#1A1F35;
+  --blue:#1847F0;--blue2:#2D5BF7;--blue3:#4A72FF;--bluelt:rgba(24,71,240,.12);
+  --green:#10B981;--greenlt:rgba(16,185,129,.12);
+  --amber:#F59E0B;--amberlt:rgba(245,158,11,.12);
+  --red:#EF4444;--redlt:rgba(239,68,68,.12);
+  --purple:#8B5CF6;--purplelt:rgba(139,92,246,.12);
+  --cyan:#00D4FF;--cyanlt:rgba(0,212,255,.1);
+  --ink:#F0F4FF;--ink2:#A8B4CC;--ink3:#5E6E92;
+  --line:rgba(255,255,255,.06);--line2:rgba(255,255,255,.1);
+  --fd:'Space Grotesk',sans-serif;--fb:'Inter',sans-serif;--r:10px;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--fb);-webkit-font-smoothing:antialiased;}
+button,input,select,textarea{font-family:var(--fb);}
+input,select,textarea{cursor:text;}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px;}
+
+/* LAYOUT */
+.shell{display:grid;grid-template-columns:220px 1fr;grid-template-rows:56px 1fr;height:100vh;overflow:hidden;}
+.topbar{grid-column:1/-1;background:var(--bg2);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 24px;gap:16px;z-index:10;}
+.topbar-logo{display:flex;align-items:center;gap:10px;}
+.topbar-brand{font-family:var(--fd);font-size:15px;font-weight:800;letter-spacing:4px;color:var(--ink);}
+.topbar-sub{font-size:9px;color:var(--blue3);letter-spacing:2px;margin-top:1px;}
+.topbar-right{display:flex;align-items:center;gap:12px;}
+.btn{padding:8px 18px;border-radius:6px;font-size:12px;font-weight:600;border:none;cursor:pointer;transition:all .2s;}
+.btn-primary{background:var(--blue);color:#fff;}
+.btn-primary:hover{background:var(--blue2);}
+.btn-ghost{background:rgba(255,255,255,.06);color:var(--ink2);border:1px solid var(--line2);}
+.btn-ghost:hover{background:rgba(255,255,255,.1);}
+.btn-danger{background:var(--redlt);color:var(--red);border:1px solid rgba(239,68,68,.25);}
+.btn-danger:hover{background:rgba(239,68,68,.2);}
+.btn-sm{padding:5px 12px;font-size:11px;}
+
+.sidebar{background:var(--bg2);border-right:1px solid var(--line);display:flex;flex-direction:column;overflow-y:auto;padding:12px 0;}
+.nav-section{padding:0 12px;margin-bottom:4px;}
+.nav-label{font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--ink3);padding:8px 10px 4px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;cursor:pointer;transition:all .2s;font-size:13px;font-weight:500;color:var(--ink2);margin-bottom:2px;}
+.nav-item:hover{background:var(--bg4);color:var(--ink);}
+.nav-item.active{background:var(--bluelt);color:var(--blue3);font-weight:600;}
+.nav-icon{font-size:16px;width:20px;text-align:center;flex-shrink:0;}
+
+.main{overflow-y:auto;padding:24px;}
+.view{display:none;}
+.view.active{display:block;animation:fadeIn .25s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* PAGE */
+.page-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;}
+.page-title{font-family:var(--fd);font-size:24px;font-weight:800;letter-spacing:-.5px;color:var(--ink);}
+.page-sub{font-size:13px;color:var(--ink3);margin-top:3px;}
+
+/* ROLE CARDS */
+.roles-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px;}
+.role-card{background:var(--bg3);border:1px solid var(--line);border-radius:var(--r);padding:20px;transition:border-color .2s;}
+.role-card:hover{border-color:var(--line2);}
+.role-icon{font-size:32px;margin-bottom:10px;}
+.role-name{font-family:var(--fd);font-size:15px;font-weight:800;color:var(--ink);margin-bottom:4px;}
+.role-desc{font-size:11px;color:var(--ink3);line-height:1.5;margin-bottom:12px;}
+.role-count{font-family:var(--fd);font-size:22px;font-weight:800;margin-bottom:4px;}
+.role-perms{display:flex;flex-direction:column;gap:4px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);}
+.perm-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--ink3);}
+.perm-item.yes{color:var(--green);}
+.perm-item.no{color:var(--ink3);opacity:.5;}
+
+/* USER TABLE */
+.table-card{background:var(--bg3);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-bottom:16px;}
+.table-header{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;}
+.table-title{font-family:var(--fd);font-size:14px;font-weight:700;color:var(--ink);}
+table.dt{width:100%;border-collapse:collapse;}
+.dt th{padding:10px 16px;text-align:left;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink3);border-bottom:1px solid var(--line);white-space:nowrap;}
+.dt td{padding:14px 16px;font-size:13px;color:var(--ink2);border-bottom:1px solid var(--line);vertical-align:middle;}
+.dt tr:last-child td{border-bottom:none;}
+.dt tr:hover td{background:rgba(255,255,255,.02);}
+.dt .td-name{font-weight:600;color:var(--ink);}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:100px;font-size:10px;font-weight:700;letter-spacing:.5px;}
+.badge-admin{background:var(--purplelt);color:var(--purple);}
+.badge-vendor{background:var(--bluelt);color:var(--blue3);}
+.badge-tecnico{background:var(--amberlt);color:var(--amber);}
+.badge-cliente{background:var(--cyanlt);color:var(--cyan);}
+.badge-active{background:var(--greenlt);color:var(--green);}
+.badge-inactive{background:rgba(255,255,255,.06);color:var(--ink3);}
+
+/* USER AVATAR */
+.u-avatar{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:14px;font-weight:800;flex-shrink:0;}
+
+/* STATS ROW */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+.stat-mini{background:var(--bg3);border:1px solid var(--line);border-radius:var(--r);padding:16px;position:relative;overflow:hidden;}
+.stat-mini::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;}
+.stat-mini.blue::before{background:var(--blue3);}
+.stat-mini.green::before{background:var(--green);}
+.stat-mini.amber::before{background:var(--amber);}
+.stat-mini.purple::before{background:var(--purple);}
+.sm-label{font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--ink3);margin-bottom:6px;}
+.sm-val{font-family:var(--fd);font-size:26px;font-weight:800;color:var(--ink);line-height:1;}
+.sm-sub{font-size:11px;color:var(--ink3);margin-top:4px;}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(8px);z-index:100;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.open{display:flex;animation:fadeIn .2s ease;}
+.modal{background:var(--bg2);border:1px solid var(--line2);border-radius:14px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;}
+.modal-header{padding:22px 24px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;}
+.modal-title{font-family:var(--fd);font-size:17px;font-weight:800;color:var(--ink);}
+.modal-body{padding:22px 24px;}
+.modal-footer{padding:16px 24px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:10px;}
+.close-btn{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.06);border:none;color:var(--ink2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.close-btn:hover{background:rgba(255,255,255,.12);}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+.form-grid.g1{grid-template-columns:1fr;}
+.fg{display:flex;flex-direction:column;gap:5px;}
+.fl{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--blue3);}
+.fi{padding:10px 13px;background:var(--bg3);border:1.5px solid var(--line2);border-radius:8px;font-size:13px;color:var(--ink);outline:none;transition:border-color .2s;width:100%;}
+.fi:focus{border-color:var(--blue3);}
+.fi::placeholder{color:var(--ink3);}
+.fi-select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%235E6E92' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;}
+
+/* PERMS GRID */
+.perms-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px;}
+.perm-check{display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--bg3);border:1.5px solid var(--line2);border-radius:8px;cursor:pointer;transition:all .2s;font-size:12px;color:var(--ink2);}
+.perm-check.active{border-color:var(--blue3);background:var(--bluelt);color:var(--ink);}
+.perm-check input{display:none;}
+
+/* TASK BOARD */
+.task-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.task-col{background:var(--bg3);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;}
+.task-col-header{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;}
+.task-col-title{font-family:var(--fd);font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;}
+.task-col-count{font-size:11px;font-weight:700;padding:2px 8px;border-radius:100px;}
+.task-cards{padding:10px;display:flex;flex-direction:column;gap:8px;min-height:60px;}
+.task-card{background:var(--bg4);border:1px solid var(--line);border-radius:8px;padding:13px;transition:all .2s;}
+.task-card:hover{border-color:var(--line2);}
+.tc-title{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:4px;}
+.tc-meta{font-size:11px;color:var(--ink3);margin-bottom:8px;}
+.tc-footer{display:flex;justify-content:space-between;align-items:center;}
+.tc-assigned{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--ink3);}
+.tc-priority{font-size:9px;font-weight:700;padding:2px 8px;border-radius:100px;text-transform:uppercase;}
+.tc-priority.high{background:var(--redlt);color:var(--red);}
+.tc-priority.mid{background:var(--amberlt);color:var(--amber);}
+.tc-priority.low{background:var(--greenlt);color:var(--green);}
+.add-task-btn{width:calc(100% - 20px);margin:0 10px 10px;padding:8px;background:none;border:1px dashed rgba(255,255,255,.12);border-radius:7px;color:var(--ink3);font-size:12px;cursor:pointer;transition:all .2s;}
+.add-task-btn:hover{border-color:var(--blue3);color:var(--blue3);}
+
+/* PERF TABLE */
+.perf-bar-bg{background:rgba(255,255,255,.06);border-radius:100px;height:6px;width:100%;overflow:hidden;}
+.perf-bar-fill{height:100%;border-radius:100px;transition:width .5s ease;}
+
+/* TOAST */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--bg2);border:1px solid var(--line2);color:var(--ink);padding:12px 22px;border-radius:10px;font-size:13px;font-weight:600;z-index:200;transition:transform .3s;box-shadow:0 8px 32px rgba(0,0,0,.4);}
+
+/* LOGIN */
+.login-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:500;transition:opacity .4s;}
+.login-screen.hidden{opacity:0;pointer-events:none;}
+.login-box{background:var(--bg2);border:1px solid var(--line2);border-radius:16px;padding:40px;width:100%;max-width:380px;text-align:center;}
+.login-logo{margin-bottom:24px;}
+.login-title{font-family:var(--fd);font-size:22px;font-weight:800;color:var(--ink);margin-bottom:6px;}
+.login-sub{font-size:13px;color:var(--ink3);margin-bottom:28px;}
+.login-input{width:100%;padding:12px 16px;background:var(--bg3);border:1.5px solid var(--line2);border-radius:10px;font-size:14px;color:var(--ink);outline:none;margin-bottom:12px;transition:border-color .2s;}
+.login-input:focus{border-color:var(--blue3);}
+.login-input::placeholder{color:var(--ink3);}
+.login-btn{width:100%;padding:13px;background:var(--blue);color:#fff;border:none;border-radius:10px;font-family:var(--fd);font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;margin-top:4px;}
+.login-btn:hover{background:var(--blue2);}
+.login-error{color:var(--red);font-size:12px;margin-top:8px;min-height:16px;}
+.login-hint{margin-top:20px;padding:12px;background:var(--bg3);border-radius:8px;text-align:left;}
+.login-hint-title{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--ink3);margin-bottom:8px;}
+.login-hint-item{font-size:11px;color:var(--ink3);margin-bottom:4px;display:flex;justify-content:space-between;}
+.login-hint-item span{color:var(--blue3);}
+
+/* ── MOBILE RESPONSIVE ── */
+.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:60px;background:var(--bg2);border-top:1px solid var(--line);z-index:50;}
+.mobile-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;transition:all .2s;padding:8px 4px;font-size:9px;font-weight:600;color:var(--ink3);letter-spacing:.5px;text-transform:uppercase;}
+.mobile-nav-item.active{color:var(--blue3);}
+.mobile-nav-item .mn-icon{font-size:20px;line-height:1;}
+.fab{display:none;position:fixed;bottom:72px;right:16px;width:52px;height:52px;border-radius:50%;background:var(--blue);border:none;color:#fff;font-size:26px;box-shadow:0 4px 20px rgba(24,71,240,.45);z-index:51;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;}
+.fab:active{transform:scale(.95);}
+@media(max-width:768px){
+  .shell{grid-template-columns:1fr!important;grid-template-rows:56px 1fr!important;}
+  .sidebar{display:none!important;}
+  .main{padding:14px;padding-bottom:72px;overflow-y:auto;}
+  .topbar{padding:0 14px;}
+  .topbar-brand{font-size:13px;letter-spacing:2px;}
+  .topbar-sub{display:none;}
+  .topbar-right .btn{display:none;}
+  #topbar-user div:last-child{display:none;}
+  .roles-grid{grid-template-columns:1fr 1fr!important;}
+  .stats-row{grid-template-columns:1fr 1fr!important;}
+  .task-cols{grid-template-columns:1fr!important;}
+  .form-grid,.form-grid.g1{grid-template-columns:1fr!important;}
+  .page-header{flex-direction:column;gap:10px;}
+  .page-header .btn{width:100%;}
+  .page-title{font-size:20px;}
+  #tbl-rendimiento th:nth-child(3),#tbl-rendimiento td:nth-child(3),
+  #tbl-rendimiento th:nth-child(5),#tbl-rendimiento td:nth-child(5),
+  #tbl-rendimiento th:nth-child(6),#tbl-rendimiento td:nth-child(6),
+  #tbl-usuarios th:nth-child(4),#tbl-usuarios td:nth-child(4),
+  #tbl-usuarios th:nth-child(5),#tbl-usuarios td:nth-child(5){display:none;}
+  .modal{border-radius:10px;}
+  .modal-body{padding:16px;}
+  .perms-grid{grid-template-columns:1fr!important;}
+  .login-box{padding:24px 18px;margin:12px;}
+  .login-hint{display:none;}
+  .mobile-nav{display:flex!important;}
+  .fab{display:flex!important;}
+  #rendimiento-content > div:last-child > div{grid-template-columns:1fr!important;}
+}
+
+</style>
+</head>
+<body>
+<div id="toast"></div>
+
+<!-- ═══ LOGIN SCREEN ═══ -->
+<div class="login-screen" id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <svg width="50" height="32" viewBox="0 0 50 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 11 2 C 2 2 0 10 0 16 C 0 22 2 30 11 30" stroke="#EEF2FF" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M 39 2 C 48 2 50 10 50 16 C 50 22 48 30 39 30" stroke="#4A72FF" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <line x1="11" y1="16" x2="39" y2="16" stroke="#1847F0" stroke-width="1.5" stroke-dasharray="3 4"/>
+        <circle cx="25" cy="16" r="5" fill="#4A72FF"/>
+      </svg>
+    </div>
+    <div class="login-title">ZYGOS CRM</div>
+    <div class="login-sub">Ingresa tus credenciales para continuar</div>
+    <input class="login-input" id="login-user" type="email" autocomplete="username" placeholder="Correo electrónico" onkeydown="if(event.key==='Enter')doLogin()"/>
+    <input class="login-input" id="login-pass" type="password" autocomplete="current-password" placeholder="Contraseña" onkeydown="if(event.key==='Enter')doLogin()"/>
+    <div class="login-error" id="login-error"></div>
+    <button class="login-btn" id="login-btn" onclick="doLogin()">Ingresar →</button>
+  </div>
+</div>
+
+<!-- ═══ MODAL USUARIO ═══ -->
+<div class="modal-overlay" id="modal-user" onclick="if(event.target===this)closeModal('modal-user')">
+<div class="modal">
+  <div class="modal-header">
+    <div class="modal-title" id="mu-title">Nuevo Usuario</div>
+    <button class="close-btn" onclick="closeModal('modal-user')">✕</button>
+  </div>
+  <div class="modal-body">
+    <div class="form-grid">
+      <div class="fg"><label class="fl">Nombre *</label><input class="fi" id="mu-nombre" placeholder="Jorge Sierra"/></div>
+      <div class="fg"><label class="fl">Email *</label><input class="fi" type="email" id="mu-email" placeholder="jorge@zygos.cl"/></div>
+    </div>
+    <div class="form-grid">
+      <div class="fg" id="mu-pass-fg"><label class="fl">Contraseña *</label><input class="fi" type="password" id="mu-pass" placeholder="mín. 6 caracteres"/></div>
+      <div class="fg" id="mu-rol-fg" style="display:none;">
+        <label class="fl">Rol *</label>
+        <select class="fi fi-select" id="mu-rol">
+          <option value="admin">👑 Administrador</option>
+          <option value="vendor">💼 Vendedor</option>
+          <option value="tecnico">🔧 Técnico</option>
+          <option value="cliente">👁️ Cliente (solo lectura)</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="fg"><label class="fl">Teléfono</label><input class="fi" id="mu-phone" placeholder="+56 9 XXXX XXXX"/></div>
+      <div class="fg"><label class="fl">Cargo</label><input class="fi" id="mu-cargo" placeholder="Ej: CEO, Ejecutivo de ventas..."/></div>
+    </div>
+    <div id="mu-create-note" style="font-size:11px;color:var(--ink3);background:var(--bg3);border-radius:8px;padding:10px 12px;margin-bottom:12px;">
+      ℹ️ La cuenta se crea con rol <strong>Vendedor</strong>. Puedes cambiarlo después editando al usuario en esta misma lista.
+    </div>
+    <label class="perm-check" id="mu-activo-chk" style="display:none;justify-content:center;" onclick="toggleFormFlag('mu-activo-chk')"><span>✓ Cuenta activa</span></label>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-ghost" onclick="closeModal('modal-user')">Cancelar</button>
+    <button class="btn btn-primary" onclick="saveUser()">Guardar Usuario</button>
+  </div>
+</div>
+</div>
+
+<!-- ═══ MODAL TAREA ═══ -->
+<div class="modal-overlay" id="modal-task" onclick="if(event.target===this)closeModal('modal-task')">
+<div class="modal">
+  <div class="modal-header">
+    <div class="modal-title" id="mt-title">Nueva Tarea</div>
+    <button class="close-btn" onclick="closeModal('modal-task')">✕</button>
+  </div>
+  <div class="modal-body">
+    <div class="form-grid g1" style="margin-bottom:14px;">
+      <div class="fg"><label class="fl">Título *</label><input class="fi" id="mt-titulo" placeholder="Ej: Instalar torniquete Iron Planet"/></div>
+    </div>
+    <div class="form-grid">
+      <div class="fg"><label class="fl">Asignar a *</label>
+        <select class="fi fi-select" id="mt-asignado"><option value="">Seleccionar usuario...</option></select>
+      </div>
+      <div class="fg"><label class="fl">Prioridad</label>
+        <select class="fi fi-select" id="mt-prioridad">
+          <option value="high">🔴 Alta</option>
+          <option value="mid" selected>🟡 Media</option>
+          <option value="low">🟢 Baja</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="fg"><label class="fl">Categoría</label>
+        <select class="fi fi-select" id="mt-cat">
+          <option value="instalacion">🔧 Instalación</option>
+          <option value="venta">💼 Venta</option>
+          <option value="soporte">📞 Soporte</option>
+          <option value="admin">📋 Administración</option>
+          <option value="mantencion">🛡️ Mantención</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Fecha límite</label><input class="fi" type="date" id="mt-fecha"/></div>
+    </div>
+    <div class="fg"><label class="fl">Descripción</label><textarea class="fi" id="mt-desc" rows="3" placeholder="Detalles de la tarea..."></textarea></div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-ghost" onclick="closeModal('modal-task')">Cancelar</button>
+    <button class="btn btn-primary" onclick="saveTask()">Crear Tarea</button>
+  </div>
+</div>
+</div>
+
+<!-- ═══ MODAL PRODUCTO ═══ -->
+<div class="modal-overlay" id="modal-product" onclick="if(event.target===this)closeModal('modal-product')">
+<div class="modal">
+  <div class="modal-header">
+    <div class="modal-title" id="mp-title">Nuevo Producto</div>
+    <button class="close-btn" onclick="closeModal('modal-product')">✕</button>
+  </div>
+  <div class="modal-body">
+    <div class="form-grid">
+      <div class="fg"><label class="fl">Nombre *</label><input class="fi" id="mp-nombre" placeholder="Torniquete tripode"/></div>
+      <div class="fg"><label class="fl">SKU</label><input class="fi" id="mp-sku" placeholder="TRP-001"/></div>
+    </div>
+    <div class="form-grid">
+      <div class="fg"><label class="fl">Categoría *</label>
+        <select class="fi fi-select" id="mp-categoria">
+          <option value="fitness">🏋️ Fitness</option>
+          <option value="edificio">🏢 Edificio</option>
+          <option value="software">💻 Software</option>
+          <option value="otro">📦 Otro</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Ícono</label><input class="fi" id="mp-icono" placeholder="🔐" maxlength="4"/></div>
+    </div>
+    <div class="form-grid">
+      <div class="fg"><label class="fl">Precio (CLP) *</label><input class="fi" type="number" min="0" id="mp-precio" placeholder="150000"/></div>
+      <div class="fg"><label class="fl">Unidad</label><input class="fi" id="mp-unidad" placeholder="unidad"/></div>
+    </div>
+    <div class="fg" style="margin-bottom:14px;"><label class="fl">Descripción</label><textarea class="fi" id="mp-desc" rows="2" placeholder="Detalle del producto..."></textarea></div>
+    <div class="form-grid">
+      <div class="fg"><label class="fl">Orden</label><input class="fi" type="number" id="mp-orden" placeholder="0"/></div>
+      <div class="fg" style="display:flex;gap:8px;align-items:flex-end;">
+        <label class="perm-check" id="mp-activo-chk" onclick="toggleFormFlag('mp-activo-chk')" style="flex:1;justify-content:center;"><span>✓ Activo</span></label>
+        <label class="perm-check" id="mp-destacado-chk" onclick="toggleFormFlag('mp-destacado-chk')" style="flex:1;justify-content:center;"><span>★ Destacado</span></label>
+      </div>
+    </div>
+
+    <div style="margin-top:16px;padding-top:14px;border-top:1px dashed var(--line2);">
+      <div style="font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--blue3);margin-bottom:10px;">🌐 Sitio web · zygos.cl</div>
+      <div class="form-grid">
+        <div class="fg" style="display:flex;gap:8px;align-items:flex-end;">
+          <label class="perm-check" id="mp-web-chk" onclick="toggleFormFlag('mp-web-chk')" style="flex:1;justify-content:center;"><span>🌐 Mostrar en web</span></label>
+          <label class="perm-check" id="mp-precioweb-chk" onclick="toggleFormFlag('mp-precioweb-chk')" style="flex:1;justify-content:center;"><span>💲 Mostrar precio</span></label>
+        </div>
+        <div class="fg"><label class="fl">Badge</label>
+          <select class="fi fi-select" id="mp-badge">
+            <option value="">Sin badge</option>
+            <option value="Popular">🔥 Popular</option>
+            <option value="Nuevo">✨ Nuevo</option>
+            <option value="Destacado">⭐ Destacado</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg" style="margin-bottom:12px;"><label class="fl">Tags (separados por coma)</label><input class="fi" id="mp-tags" placeholder="Facial, QR, RFID, Cloud"/></div>
+      <div class="fg" style="margin-bottom:12px;"><label class="fl">Descripción comercial (la ve el visitante)</label><textarea class="fi" id="mp-descweb" rows="2" placeholder="Texto de venta para la tarjeta del sitio..."></textarea></div>
+      <div class="fg" style="margin-bottom:12px;"><label class="fl">Características (una por línea)</label><textarea class="fi" id="mp-carac" rows="3" placeholder="Reconocimiento facial en 0.5 segundos&#10;Garantía 12 meses"></textarea></div>
+      <div class="fg"><label class="fl">Foto del producto</label>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <div id="mp-foto-prev" style="width:64px;height:64px;border-radius:10px;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:24px;overflow:hidden;flex-shrink:0;">📷</div>
+          <input type="file" id="mp-foto-file" accept="image/*" style="display:none;" onchange="uploadFotoCatalogo(this,'mp')"/>
+          <button class="btn btn-ghost btn-sm" type="button" onclick="document.getElementById('mp-foto-file').click()">⬆ Subir foto</button>
+          <button class="btn btn-ghost btn-sm" type="button" id="mp-foto-quitar" style="display:none;" onclick="quitarFoto('mp')">✕ Quitar</button>
+          <span id="mp-foto-status" style="font-size:11px;color:var(--ink3);"></span>
+        </div>
+        <input type="hidden" id="mp-imagen-url"/>
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-ghost" onclick="closeModal('modal-product')">Cancelar</button>
+    <button class="btn btn-primary" onclick="saveProduct()">Guardar Producto</button>
+  </div>
+</div>
+</div>
+
+<!-- ═══ MODAL SERVICIO ═══ -->
+<div class="modal-overlay" id="modal-service" onclick="if(event.target===this)closeModal('modal-service')">
+<div class="modal">
+  <div class="modal-header">
+    <div class="modal-title" id="ms-title">Nuevo Servicio</div>
+    <button class="close-btn" onclick="closeModal('modal-service')">✕</button>
+  </div>
+  <div class="modal-body">
+    <div class="form-grid">
+      <div class="fg"><label class="fl">Nombre *</label><input class="fi" id="ms-nombre" placeholder="Instalación y configuración"/></div>
+      <div class="fg"><label class="fl">Ícono</label><input class="fi" id="ms-icono" placeholder="🔧" maxlength="4"/></div>
+    </div>
+    <div class="form-grid">
+      <div class="fg"><label class="fl">Precio (CLP)</label><input class="fi" type="number" min="0" id="ms-precio" placeholder="0"/></div>
+      <div class="fg"><label class="fl">Orden</label><input class="fi" type="number" id="ms-orden" placeholder="0"/></div>
+    </div>
+    <div class="fg" style="margin-bottom:14px;"><label class="fl">Descripción</label><textarea class="fi" id="ms-desc" rows="2" placeholder="Detalle del servicio..."></textarea></div>
+    <label class="perm-check" id="ms-activo-chk" onclick="toggleFormFlag('ms-activo-chk')" style="justify-content:center;"><span>✓ Activo</span></label>
+    <div style="margin-top:16px;padding-top:14px;border-top:1px dashed var(--line2);">
+      <div style="font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--blue3);margin-bottom:10px;">🌐 Sitio web · zygos.cl</div>
+      <div class="form-grid">
+        <div class="fg" style="display:flex;gap:8px;align-items:flex-end;">
+          <label class="perm-check" id="ms-web-chk" onclick="toggleFormFlag('ms-web-chk')" style="flex:1;justify-content:center;"><span>🌐 Mostrar en web</span></label>
+          <label class="perm-check" id="ms-precioweb-chk" onclick="toggleFormFlag('ms-precioweb-chk')" style="flex:1;justify-content:center;"><span>💲 Mostrar precio</span></label>
+        </div>
+        <div class="fg"><label class="fl">Badge</label>
+          <select class="fi fi-select" id="ms-badge">
+            <option value="">Sin badge</option>
+            <option value="Popular">🔥 Popular</option>
+            <option value="Nuevo">✨ Nuevo</option>
+            <option value="Destacado">⭐ Destacado</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg" style="margin-bottom:12px;"><label class="fl">Tags (separados por coma)</label><input class="fi" id="ms-tags" placeholder="Instalación, Capacitación, Garantía 12m"/></div>
+      <div class="fg" style="margin-bottom:12px;"><label class="fl">Descripción comercial (la ve el visitante)</label><textarea class="fi" id="ms-descweb" rows="2" placeholder="Texto de venta para la tarjeta del sitio..."></textarea></div>
+      <div class="fg" style="margin-bottom:12px;"><label class="fl">Características (una por línea)</label><textarea class="fi" id="ms-carac" rows="3" placeholder="Diagnóstico técnico previo&#10;Instalación certificada"></textarea></div>
+      <div class="fg"><label class="fl">Foto del servicio</label>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <div id="ms-foto-prev" style="width:64px;height:64px;border-radius:10px;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:24px;overflow:hidden;flex-shrink:0;">📷</div>
+          <input type="file" id="ms-foto-file" accept="image/*" style="display:none;" onchange="uploadFotoCatalogo(this,'ms')"/>
+          <button class="btn btn-ghost btn-sm" type="button" onclick="document.getElementById('ms-foto-file').click()">⬆ Subir foto</button>
+          <button class="btn btn-ghost btn-sm" type="button" id="ms-foto-quitar" style="display:none;" onclick="quitarFoto('ms')">✕ Quitar</button>
+          <span id="ms-foto-status" style="font-size:11px;color:var(--ink3);"></span>
+        </div>
+        <input type="hidden" id="ms-imagen-url"/>
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-ghost" onclick="closeModal('modal-service')">Cancelar</button>
+    <button class="btn btn-primary" onclick="saveService()">Guardar Servicio</button>
+  </div>
+</div>
+</div>
+
+<!-- ═══ SHELL ═══ -->
+<div class="shell" id="app-shell" style="display:none;">
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-logo">
+    <svg width="28" height="18" viewBox="0 0 28 18" fill="none"><path d="M 6 1 C 1 1 0 5 0 9 C 0 13 1 17 6 17" stroke="#EEF2FF" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M 22 1 C 27 1 28 5 28 9 C 28 13 27 17 22 17" stroke="#4A72FF" stroke-width="2" fill="none" stroke-linecap="round"/><line x1="6" y1="9" x2="22" y2="9" stroke="#1847F0" stroke-width="1" stroke-dasharray="2.5 3.5"/><circle cx="14" cy="9" r="2.5" fill="#4A72FF"/></svg>
+    <div><div class="topbar-brand">ZYGOS</div><div class="topbar-sub">GESTIÓN DE EQUIPO</div></div>
+  </div>
+  <div class="topbar-right">
+    <div id="topbar-user" style="display:flex;align-items:center;gap:10px;padding:6px 14px;background:var(--bg3);border:1px solid var(--line2);border-radius:8px;"></div>
+    <button class="btn btn-ghost" onclick="doLogout()">Cerrar sesión</button>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="nav-section">
+    <div class="nav-label">Principal</div>
+    <div class="nav-item active" id="nav-usuarios" onclick="showView('usuarios')"><span class="nav-icon">👥</span>Usuarios</div>
+    <div class="nav-item" id="nav-catalogo" onclick="showView('catalogo')"><span class="nav-icon">🛒</span>Catálogo</div>
+    <div class="nav-item" id="nav-sitioweb" onclick="showView('sitioweb')"><span class="nav-icon">🌐</span>Sitio Web<span id="nb-leads" style="margin-left:auto;background:var(--green);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:100px;">0</span></div>
+    <div class="nav-item" id="nav-tareas" onclick="showView('tareas')"><span class="nav-icon">✅</span>Tareas<span id="nb-tareas" style="margin-left:auto;background:var(--blue);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:100px;">0</span></div>
+    <div class="nav-item" id="nav-rendimiento" onclick="showView('rendimiento')"><span class="nav-icon">📊</span>Rendimiento</div>
+    <div class="nav-item" id="nav-roles" onclick="showView('roles')"><span class="nav-icon">🔐</span>Roles y Permisos</div>
+  </div>
+  <div class="nav-section" style="margin-top:8px;">
+    <div class="nav-label">Apps</div>
+    <div class="nav-item" onclick="openCRM()"><span class="nav-icon">🏢</span>Ir al CRM</div>
+    <div class="nav-item" onclick="openCotizador()"><span class="nav-icon">🧾</span>Cotizador</div>
+  </div>
+  <div style="margin-top:auto;padding:16px 12px;">
+    <div style="background:var(--bg4);border:1px solid var(--line);border-radius:8px;padding:12px;">
+      <div style="font-size:11px;font-weight:700;color:var(--blue3);margin-bottom:4px;">ZYGOS SpA</div>
+      <div style="font-size:10px;color:var(--ink3);line-height:1.6;">RUT: 78.441.825-1<br>+56 9 7137 0313<br>Viña del Mar</div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+<!-- ─── USUARIOS ─── -->
+<div class="view active" id="view-usuarios">
+  <div class="page-header">
+    <div><div class="page-title">Usuarios del Sistema</div><div class="page-sub">Gestiona accesos, roles y permisos</div></div>
+    <div style="display:flex;gap:8px;" id="actions-usuarios">
+      <button class="btn btn-primary" onclick="openNewUser()">+ Nuevo Usuario</button>
+    </div>
+  </div>
+
+  <div class="stats-row" id="user-stats"></div>
+
+  <div class="table-card">
+    <div class="table-header">
+      <div class="table-title">Usuarios registrados</div>
+      <div id="user-count" style="font-size:12px;color:var(--ink3);"></div>
+    </div>
+    <table class="dt" id="tbl-usuarios">
+      <thead><tr>
+        <th>Usuario</th><th>Rol</th><th>Estado</th><th>Último acceso</th><th>Acciones</th>
+      </tr></thead>
+      <tbody id="users-table"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ─── CATALOGO ─── -->
+<div class="view" id="view-catalogo">
+  <div class="page-header">
+    <div><div class="page-title">Catálogo</div><div class="page-sub">Productos y servicios que ofrece ZYGOS</div></div>
+  </div>
+
+  <div class="table-card">
+    <div class="table-header">
+      <div class="table-title">Productos</div>
+      <div id="actions-productos"></div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="dt">
+        <thead><tr><th>Producto</th><th>Categoría</th><th>Precio</th><th>Estado</th><th>Acciones</th></tr></thead>
+        <tbody id="products-table"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <div class="table-header">
+      <div class="table-title">Servicios</div>
+      <div id="actions-servicios"></div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="dt">
+        <thead><tr><th>Servicio</th><th>Precio</th><th>Estado</th><th>Acciones</th></tr></thead>
+        <tbody id="services-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ─── SITIO WEB ─── -->
+<div class="view" id="view-sitioweb">
+  <div class="page-header">
+    <div><div class="page-title">Sitio Web</div><div class="page-sub">Leads del formulario y textos editables de zygos.cl</div></div>
+    <div style="display:flex;gap:8px;">
+      <a class="btn btn-ghost btn-sm" href="index.html" target="_blank" rel="noopener">🌐 Ver sitio</a>
+      <button class="btn btn-ghost btn-sm" onclick="refreshSitioWeb()">↻ Actualizar</button>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <div class="table-header">
+      <div class="table-title">Leads recibidos desde el sitio</div>
+      <div id="leads-count" style="font-size:12px;color:var(--ink3);"></div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="dt">
+        <thead><tr><th>Fecha</th><th>Contacto</th><th>Producto</th><th>Mensaje</th><th>Estado</th><th>Acciones</th></tr></thead>
+        <tbody id="leads-table"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <div class="table-header">
+      <div class="table-title">Textos del sitio</div>
+      <div style="font-size:12px;color:var(--ink3);">Los cambios se ven en zygos.cl al recargar la página</div>
+    </div>
+    <div id="site-texts" style="padding:18px;display:grid;gap:16px;"></div>
+  </div>
+</div>
+
+<!-- ─── TAREAS ─── -->
+<div class="view" id="view-tareas">
+  <div class="page-header">
+    <div><div class="page-title">Gestión de Tareas</div><div class="page-sub">Asigna y da seguimiento a las tareas del equipo</div></div>
+    <div style="display:flex;gap:8px;" id="actions-tareas">
+      <button class="btn btn-primary" onclick="openNewTask()">+ Nueva Tarea</button>
+    </div>
+  </div>
+  <div class="task-cols" id="task-board"></div>
+</div>
+
+<!-- ─── RENDIMIENTO ─── -->
+<div class="view" id="view-rendimiento">
+  <div class="page-header">
+    <div><div class="page-title">Rendimiento del Equipo</div><div class="page-sub">Resultados y métricas por usuario</div></div>
+  </div>
+  <div id="rendimiento-content"></div>
+</div>
+
+<!-- ─── ROLES ─── -->
+<div class="view" id="view-roles">
+  <div class="page-header">
+    <div><div class="page-title">Roles y Permisos</div><div class="page-sub">Qué puede hacer cada rol en el sistema</div></div>
+  </div>
+  <div class="roles-grid" id="roles-grid"></div>
+  <div class="table-card">
+    <div class="table-header"><div class="table-title">Matriz de permisos</div></div>
+    <table class="dt" id="perms-matrix"></table>
+  </div>
+</div>
+
+</div><!-- /main -->
+</div><!-- /shell -->
+
+<script>
+// ═══════════════════════════
+// ROLES Y PERMISOS
+// ═══════════════════════════
+const ROLES = {
+  admin:   { label:'Administrador', icon:'👑', color:'var(--purple)', badge:'badge-admin',
+    perms:{ dashboard:true, pipeline:true, clientes:true, cotizador:true, seguimiento:true, usuarios:true, tareas:true, rendimiento:true, editar:true, eliminar:true } },
+  vendor:  { label:'Vendedor', icon:'💼', color:'var(--blue3)', badge:'badge-vendor',
+    perms:{ dashboard:true, pipeline:true, clientes:true, cotizador:true, seguimiento:true, usuarios:false, tareas:true, rendimiento:false, editar:true, eliminar:false } },
+  tecnico: { label:'Técnico', icon:'🔧', color:'var(--amber)', badge:'badge-tecnico',
+    perms:{ dashboard:false, pipeline:false, clientes:true, cotizador:false, seguimiento:true, usuarios:false, tareas:true, rendimiento:false, editar:false, eliminar:false } },
+  cliente: { label:'Cliente (Solo lectura)', icon:'👁️', color:'var(--cyan)', badge:'badge-cliente',
+    perms:{ dashboard:false, pipeline:false, clientes:false, cotizador:false, seguimiento:false, usuarios:false, tareas:false, rendimiento:false, editar:false, eliminar:false } },
+};
+
+const PERMS_LABELS = {
+  dashboard:'Ver Dashboard', pipeline:'Pipeline ventas', clientes:'Ver clientes',
+  cotizador:'Usar cotizador', seguimiento:'Seguimiento WA', usuarios:'Gestionar usuarios',
+  tareas:'Ver/crear tareas', rendimiento:'Ver rendimiento', editar:'Editar registros', eliminar:'Eliminar registros',
+};
+
+
+// ═══════════════════════════
+// FOTOS DE CATÁLOGO (Supabase Storage, bucket "productos")
+// ═══════════════════════════
+async function uploadFotoCatalogo(input, prefix) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  if (file.size > 4 * 1024 * 1024) { toast('⚠️ La foto no puede superar 4 MB.'); input.value = ''; return; }
+  const st = document.getElementById(prefix + '-foto-status');
+  if (st) st.textContent = 'Subiendo…';
+  const ext = ((file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '')) || 'jpg';
+  const path = (prefix === 'mp' ? 'productos/' : 'servicios/') + crypto.randomUUID() + '.' + ext;
+  const { error } = await sb.storage.from('productos').upload(path, file, { cacheControl: '3600', upsert: false });
+  if (error) { if (st) st.textContent = ''; toast('❌ No se pudo subir la foto: ' + error.message); input.value = ''; return; }
+  const { data } = sb.storage.from('productos').getPublicUrl(path);
+  setFotoPreview(prefix, data.publicUrl);
+  if (st) st.textContent = '✓ Foto lista';
+  input.value = '';
+}
+
+function setFotoPreview(prefix, url) {
+  const hidden = document.getElementById(prefix + '-imagen-url');
+  const prev   = document.getElementById(prefix + '-foto-prev');
+  const quitar = document.getElementById(prefix + '-foto-quitar');
+  if (!hidden || !prev) return;
+  hidden.value = url || '';
+  if (url) {
+    prev.innerHTML = '<img src="' + url + '" style="width:100%;height:100%;object-fit:cover;" alt=""/>';
+    if (quitar) quitar.style.display = '';
+  } else {
+    prev.textContent = '📷';
+    if (quitar) quitar.style.display = 'none';
+  }
+}
+
+function quitarFoto(prefix) {
+  setFotoPreview(prefix, '');
+  const st = document.getElementById(prefix + '-foto-status');
+  if (st) st.textContent = '';
+}
+
+// ═══════════════════════════
+// SITIO WEB — LEADS Y TEXTOS
+// ═══════════════════════════
+let LEADS = [];
+let SITE_TEXTS = [];
+
+async function loadLeads() {
+  const { data, error } = await sb.from('leads').select('*').order('created_at', { ascending: false }).limit(200);
+  if (error) { console.warn('leads:', error); LEADS = []; return; }
+  LEADS = data || [];
+}
+
+async function loadSiteTexts() {
+  const { data, error } = await sb.from('site_content').select('*').order('orden', { ascending: true });
+  if (error) { console.warn('site_content:', error); SITE_TEXTS = []; return; }
+  SITE_TEXTS = data || [];
+}
+
+async function refreshSitioWeb() {
+  await Promise.all([loadLeads(), loadSiteTexts()]);
+  renderSitioWeb();
+  updateBadges();
+}
+
+const LEAD_ESTADOS = {
+  nuevo:      { label: '● Nuevo',      style: 'background:rgba(74,114,255,.12);color:var(--blue3);' },
+  contactado: { label: '◐ Contactado', style: 'background:rgba(245,158,11,.12);color:var(--amber);' },
+  convertido: { label: '✓ Convertido', style: 'background:rgba(16,185,129,.12);color:var(--green);' },
+  descartado: { label: '✕ Descartado', style: 'background:rgba(148,163,184,.15);color:var(--ink3);' },
+};
+
+function renderSitioWeb() {
+  // Leads
+  const cnt = document.getElementById('leads-count');
+  if (cnt) cnt.textContent = LEADS.length + ' leads · ' + LEADS.filter(l => l.estado === 'nuevo').length + ' sin atender';
+  const tb = document.getElementById('leads-table');
+  if (tb) tb.innerHTML = LEADS.length ? LEADS.map(l => {
+    const est = LEAD_ESTADOS[l.estado] || LEAD_ESTADOS.nuevo;
+    const fecha = l.created_at ? new Date(l.created_at).toLocaleString('es-CL', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—';
+    const contacto = [l.nombre, l.empresa].filter(Boolean).map(esc).join(' · ') || '—';
+    const medios = [l.telefono, l.email].filter(Boolean).map(esc).join('<br>');
+    const canal = l.canal === 'whatsapp' ? '💬' : (l.canal === 'email' ? '📧' : '');
+    const acciones = [];
+    if (l.estado === 'nuevo' || l.estado === 'contactado') {
+      if (l.estado === 'nuevo') acciones.push(`<button class="btn btn-ghost btn-sm" onclick="setLeadEstado('${l.id}','contactado')" title="Marcar contactado">✔</button>`);
+      acciones.push(`<button class="btn btn-primary btn-sm" onclick="convertLead('${l.id}')" title="Crear cliente en el CRM">→ Cliente</button>`);
+      acciones.push(`<button class="btn btn-ghost btn-sm" onclick="setLeadEstado('${l.id}','descartado')" title="Descartar">✕</button>`);
+    }
+    return `<tr>
+      <td style="white-space:nowrap;font-size:12px;color:var(--ink2);">${fecha} ${canal}</td>
+      <td><div class="td-name">${contacto}</div><div style="font-size:11px;color:var(--ink3);">${medios || '—'}</div></td>
+      <td style="font-size:12px;">${esc(l.producto || '—')}</td>
+      <td style="max-width:260px;font-size:12px;color:var(--ink2);white-space:normal;">${esc((l.mensaje || '—').slice(0, 140))}${(l.mensaje || '').length > 140 ? '…' : ''}</td>
+      <td><span class="badge" style="${est.style}">${est.label}</span></td>
+      <td><div style="display:flex;gap:6px;">${acciones.join('') || '—'}</div></td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="6" style="text-align:center;color:var(--ink3);padding:24px;">Aún no llegan leads desde el sitio. Cuando alguien envíe el formulario de "Cotizar" en zygos.cl, aparecerá aquí.</td></tr>`;
+
+  // Textos
+  const box = document.getElementById('site-texts');
+  if (box) box.innerHTML = SITE_TEXTS.length ? SITE_TEXTS.map(t => `
+    <div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap;">
+        <div>
+          <span style="font-size:13px;font-weight:700;color:var(--ink);">${esc(t.etiqueta || t.clave)}</span>
+          <span style="font-size:11px;color:var(--ink3);margin-left:8px;">${esc(t.ayuda || '')}</span>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="saveSiteText('${t.clave}')">Guardar</button>
+      </div>
+      <textarea class="fi" id="st-${t.clave}" rows="2">${esc(t.valor || '')}</textarea>
+    </div>`).join('')
+    : '<div style="color:var(--ink3);font-size:13px;">No hay textos configurados. Ejecuta la migración SQL "sitio autoadministrable" en Supabase para habilitarlos.</div>';
+}
+
+async function setLeadEstado(id, estado) {
+  const { error } = await sb.from('leads').update({ estado }).eq('id', id);
+  if (error) { toast('❌ ' + friendlyError(error)); return; }
+  await loadLeads(); renderSitioWeb(); updateBadges();
+  toast(estado === 'descartado' ? '✕ Lead descartado' : '✔ Lead marcado como contactado');
+}
+
+async function convertLead(id) {
+  const l = LEADS.find(x => x.id === id); if (!l) return;
+  if (!confirm('¿Crear "' + (l.nombre || l.empresa || 'este lead') + '" como cliente en el CRM?')) return;
+  const payload = {
+    nombre:  l.nombre || l.empresa || 'Lead web',
+    empresa: l.empresa || l.nombre || 'Lead web',
+    email:   l.email || null,
+    phone:   l.telefono || null,
+    notas:   'Lead del sitio web (' + new Date(l.created_at).toLocaleDateString('es-CL') + ')' + (l.producto ? ' · Interés: ' + l.producto : '') + (l.mensaje ? '\n' + l.mensaje : ''),
+    created_by: currentUser.id,
+  };
+  const { error } = await sb.from('clients').insert(payload);
+  if (error) { toast('❌ No se pudo crear el cliente: ' + friendlyError(error)); return; }
+  await sb.from('leads').update({ estado: 'convertido' }).eq('id', id);
+  await loadLeads(); renderSitioWeb(); updateBadges();
+  toast('✅ Cliente creado en el CRM');
+}
+
+async function saveSiteText(clave) {
+  const el = document.getElementById('st-' + clave);
+  if (!el) return;
+  const { error } = await sb.from('site_content').update({ valor: el.value.trim(), updated_at: new Date().toISOString() }).eq('clave', clave);
+  if (error) { toast('❌ ' + friendlyError(error)); return; }
+  toast('✅ Texto guardado — recarga zygos.cl para verlo');
+}
+
+// ═══════════════════════════
+// SUPABASE
+// ═══════════════════════════
+const SUPABASE_URL = 'https://udubevpjygryycwipucs.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkdWJldnBqeWdyeXljd2lwdWNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg4MjE5MTgsImV4cCI6MjEwNDM5NzkxOH0.NSWJaFiiBBM6xrplU6VhBzqMtk8WTbjOgwJQYoKjljo';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Separate, non-persisting client used ONLY for admin-driven signUp() calls.
+// supabase-js's auth.signUp() replaces the *calling client's* current session
+// with the newly created user's session when email confirmation is disabled —
+// which would silently log the admin out of their own session. Using an
+// isolated client with persistSession:false avoids that entirely; we never
+// use its session, we just discard it after the signUp call returns.
+function makeSignupClient() {
+  return supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false, storageKey: 'sb-signup-temp' }
+  });
+}
+
+// ═══════════════════════════
+// HELPERS
+// ═══════════════════════════
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+}
+function friendlyError(error) {
+  const msg = error?.message || 'Ocurrió un error inesperado.';
+  if (/already registered|already exists|user_already_exists/i.test(msg)) return 'Ese correo ya está registrado.';
+  if (/permission denied|row-level security|rls/i.test(msg)) return 'No tienes permiso para realizar esta acción.';
+  if (/duplicate key|unique constraint/i.test(msg)) return 'Ya existe un registro con esos datos (posible SKU duplicado).';
+  if (/invalid login credentials/i.test(msg)) return 'Correo o contraseña incorrectos.';
+  if (/check constraint/i.test(msg)) return 'Alguno de los valores ingresados no es válido.';
+  return msg;
+}
+function flagOn(id) { return !!document.getElementById(id)?.classList.contains('active'); }
+function setFlag(id, val) { document.getElementById(id)?.classList.toggle('active', !!val); }
+function toggleFormFlag(id) { document.getElementById(id)?.classList.toggle('active'); }
+
+// ═══════════════════════════
+// DATA
+// ═══════════════════════════
+// Task board has no Supabase table (out of scope for this rewrite) — it stays
+// a local/UI-only feature. It is seeded empty so it never pretends to be tied
+// to real accounts.
+const DEFAULT_TASKS = [];
+
+const DB = {
+  get tasks(){ try{ return JSON.parse(localStorage.getItem('z_tasks')||'null')||DEFAULT_TASKS; }catch{ return DEFAULT_TASKS; } },
+  get perf() { try{ return JSON.parse(localStorage.getItem('z_perf')||'{}'); }catch{ return {}; } },
+  save(key,data){ try{ localStorage.setItem('z_'+key,JSON.stringify(data)); }catch(e){} },
+};
+
+let currentUser    = null;  // Supabase auth user
+let currentProfile = null;  // row from public.profiles
+let teamProfiles   = [];    // profiles visible to the current user (RLS-filtered)
+let PRODUCTS = [];
+let SERVICES = [];
+let editUserId    = null;
+let editTaskId    = null;
+let editProductId = null;
+let editServiceId = null;
+
+// ═══════════════════════════
+// LOGIN
+// ═══════════════════════════
+async function doLogin() {
+  const email    = document.getElementById('login-user').value.trim();
+  const password = document.getElementById('login-pass').value;
+  const errEl    = document.getElementById('login-error');
+  const btn      = document.getElementById('login-btn');
+  errEl.textContent = '';
+
+  if (!email || !password) { errEl.textContent = '⚠️ Ingresa tu correo y contraseña.'; return; }
+
+  if (btn) { btn.disabled = true; btn.textContent = 'Ingresando…'; }
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) {
+    errEl.textContent = '⚠️ Correo o contraseña incorrectos.';
+    document.getElementById('login-pass').value = '';
+    if (btn) { btn.disabled = false; btn.textContent = 'Ingresar →'; }
+    return;
+  }
+
+  const ok = await loadProfileAndEnter(data.user, false);
+  if (!ok && btn) { btn.disabled = false; btn.textContent = 'Ingresar →'; }
+}
+
+async function loadProfileAndEnter(authUser, instant) {
+  const errEl = document.getElementById('login-error');
+  const { data: profile, error } = await sb.from('profiles').select('*').eq('id', authUser.id).single();
+
+  if (error || !profile) {
+    await sb.auth.signOut();
+    if (errEl) errEl.textContent = '⚠️ No se pudo cargar tu perfil. Contacta al administrador.';
+    return false;
+  }
+  if (profile.activo === false) {
+    await sb.auth.signOut();
+    if (errEl) errEl.textContent = 'Tu cuenta está inactiva. Contacta al administrador.';
+    return false;
+  }
+  if (profile.rol === 'cliente') {
+    await sb.auth.signOut();
+    if (errEl) errEl.textContent = 'Tu cuenta no tiene acceso a este panel interno.';
+    return false;
+  }
+
+  currentUser    = authUser;
+  currentProfile = profile;
+
+  // Best-effort last_login stamp — don't block login on it.
+  sb.from('profiles').update({ last_login: new Date().toISOString() }).eq('id', authUser.id).then(() => {});
+
+  if (instant) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app-shell').style.display = 'grid';
+    await initApp();
+  } else {
+    document.getElementById('login-screen').classList.add('hidden');
+    await new Promise(res => setTimeout(res, 400));
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app-shell').style.display = 'grid';
+    await initApp();
+  }
+  return true;
+}
+
+async function doLogout() {
+  try { await sb.auth.signOut(); } catch (e) {}
+  location.reload();
+}
+
+function openCRM() {
+  window.open('zygos-crm.html', '_blank');
+}
+
+function openCotizador() {
+  window.open('zygos-cotizador-pro.html', '_blank');
+}
+
+// ═══════════════════════════
+// INIT APP
+// ═══════════════════════════
+async function initApp() {
+  renderTopbarUser();
+  applyPermissions();
+
+  await Promise.all([loadTeam(), loadCatalog(), loadLeads(), loadSiteTexts()]);
+
+  const isAdmin  = currentProfile.rol === 'admin';
+  const isVendor = currentProfile.rol === 'vendor';
+  const defaultView = isAdmin ? 'usuarios' : (isVendor ? 'catalogo' : 'tareas');
+  showView(defaultView);
+}
+
+function renderTopbarUser() {
+  const role = ROLES[currentProfile.rol] || ROLES.vendor;
+  document.getElementById('topbar-user').innerHTML = `
+    <div style="width:28px;height:28px;border-radius:7px;background:${role.color}20;display:flex;align-items:center;justify-content:center;font-size:14px;">${role.icon}</div>
+    <div>
+      <div style="font-size:12px;font-weight:700;color:var(--ink);">${esc((currentProfile.nombre||currentProfile.email||'Usuario').split(' ')[0])}</div>
+      <div style="font-size:10px;color:${role.color};">${role.label}</div>
+    </div>`;
+  showSessionInfo();
+}
+
+function showSessionInfo() {
+  // Add current user badge to sidebar bottom
+  const sideBottom = document.querySelector('.sidebar > div:last-child > div');
+  if (!sideBottom || !currentProfile) return;
+  const existing = sideBottom.querySelector('.session-badge');
+  if (existing) existing.remove();
+  const role = ROLES[currentProfile.rol] || ROLES.vendor;
+  const badge = document.createElement('div');
+  badge.className = 'session-badge';
+  badge.style.cssText = 'margin-top:10px;padding:8px 10px;background:rgba(255,255,255,.04);border-radius:6px;display:flex;align-items:center;gap:8px;';
+  badge.innerHTML = `<div style="width:28px;height:28px;border-radius:7px;background:${role.color}20;display:flex;align-items:center;justify-content:center;font-size:14px;">${role.icon}</div>
+    <div><div style="font-size:11px;font-weight:700;color:var(--ink);">${esc((currentProfile.nombre||currentProfile.email||'Usuario').split(' ')[0])}</div>
+    <div style="font-size:9px;color:${role.color};">${role.label}</div></div>`;
+  sideBottom.appendChild(badge);
+}
+
+function applyPermissions() {
+  const isAdmin  = currentProfile.rol === 'admin';
+  const isVendor = currentProfile.rol === 'vendor';
+
+  // "Gestionar usuarios" — admin only
+  const navUsuarios = document.getElementById('nav-usuarios');
+  if (navUsuarios) navUsuarios.style.display = isAdmin ? '' : 'none';
+  const mnUsuarios = document.getElementById('mn-usuarios');
+  if (mnUsuarios) mnUsuarios.style.display = isAdmin ? '' : 'none';
+  if (!isAdmin) {
+    const act = document.getElementById('actions-usuarios');
+    if (act) act.innerHTML = '';
+  }
+
+  // Catálogo — admin & vendor (not tecnico)
+  const navCatalogo = document.getElementById('nav-catalogo');
+  if (navCatalogo) navCatalogo.style.display = (isAdmin || isVendor) ? '' : 'none';
+  const mnCatalogo = document.getElementById('mn-catalogo');
+  if (mnCatalogo) mnCatalogo.style.display = (isAdmin || isVendor) ? '' : 'none';
+
+  // Sitio Web (leads + textos) — admin & vendor
+  const navSW = document.getElementById('nav-sitioweb');
+  if (navSW) navSW.style.display = (isAdmin || isVendor) ? '' : 'none';
+  const mnSW = document.getElementById('mn-sitioweb');
+  if (mnSW) mnSW.style.display = (isAdmin || isVendor) ? '' : 'none';
+}
+
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const v = document.getElementById('view-'+name);
+  const n = document.getElementById('nav-'+name);
+  if (v) v.classList.add('active');
+  if (n) n.classList.add('active');
+  if (name==='usuarios')     renderUsers();
+  if (name==='catalogo')     renderCatalog();
+  if (name==='tareas')       renderTasks();
+  if (name==='rendimiento')  renderRendimiento();
+  if (name==='roles')        renderRoles();
+  if (name==='sitioweb')     refreshSitioWeb();
+  updateBadges();
+}
+
+function updateBadges() {
+  const pending = DB.tasks.filter(t => t.estado !== 'completada').length;
+  document.getElementById('nb-tareas').textContent = pending;
+  const nbLeads = document.getElementById('nb-leads');
+  if (nbLeads) nbLeads.textContent = LEADS.filter(l => l.estado === 'nuevo').length;
+}
+
+// ═══════════════════════════
+// USUARIOS
+// ═══════════════════════════
+async function loadTeam() {
+  const { data, error } = await sb.from('profiles').select('*').order('created_at', { ascending: true });
+  if (error) {
+    console.error(error);
+    teamProfiles = currentProfile ? [currentProfile] : [];
+    return;
+  }
+  teamProfiles = data || [];
+}
+
+function renderUsers() {
+  const users = teamProfiles;
+  const isAdmin = currentProfile.rol === 'admin';
+
+  // Stats
+  document.getElementById('user-stats').innerHTML = Object.entries(ROLES).map(([key, role]) => {
+    const count = users.filter(u => u.rol === key).length;
+    const colorClass = key === 'admin' ? 'purple' : key === 'vendor' ? 'blue' : key === 'tecnico' ? 'amber' : 'green';
+    return `<div class="stat-mini ${colorClass}"><div class="sm-label">${role.label}</div><div class="sm-val" style="color:${role.color};">${count}</div><div class="sm-sub">${role.icon} usuarios</div></div>`;
+  }).join('');
+
+  document.getElementById('user-count').textContent = `${users.length} usuario${users.length!==1?'s':''} registrados`;
+
+  document.getElementById('users-table').innerHTML = users.map(u => {
+    const role = ROLES[u.rol] || ROLES.vendor;
+    const lastLogin = u.last_login
+      ? new Date(u.last_login).toLocaleDateString('es-CL', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })
+      : 'Nunca';
+    const initial = (u.nombre || u.email || '?').trim().charAt(0).toUpperCase() || '?';
+    return `<tr>
+      <td>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="u-avatar" style="background:${role.color}20;color:${role.color};">${esc(initial)}</div>
+          <div>
+            <div class="td-name">${esc(u.nombre || '(Sin nombre)')}</div>
+            <div style="font-size:11px;color:var(--ink3);">${esc(u.email||'')}${u.cargo ? ' · '+esc(u.cargo) : ''}</div>
+          </div>
+        </div>
+      </td>
+      <td><span class="badge ${role.badge}">${role.icon} ${role.label}</span></td>
+      <td><span class="badge ${u.activo !== false ? 'badge-active' : 'badge-inactive'}">${u.activo !== false ? '● Activo' : '○ Inactivo'}</span></td>
+      <td style="font-size:12px;color:var(--ink3);">${lastLogin}</td>
+      <td>
+        ${isAdmin ? `
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-ghost btn-sm" onclick="editUser('${u.id}')">✏️ Editar</button>
+            ${u.id !== currentProfile.id
+              ? `<button class="btn btn-danger btn-sm" onclick="toggleUser('${u.id}')">${u.activo !== false ? 'Desactivar' : 'Activar'}</button>`
+              : '<span style="font-size:11px;color:var(--ink3);">(tú)</span>'
+            }
+          </div>` : '—'
+        }
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+const ALL_PERMS = [
+  { key:'dashboard',    label:'Ver Dashboard',      icon:'📊' },
+  { key:'pipeline',     label:'Pipeline ventas',     icon:'🎯' },
+  { key:'clientes',     label:'Ver clientes',        icon:'👥' },
+  { key:'cotizador',    label:'Usar cotizador',      icon:'🧾' },
+  { key:'seguimiento',  label:'Seguimiento WA',      icon:'📲' },
+  { key:'usuarios',     label:'Gestionar usuarios',  icon:'🔐' },
+  { key:'tareas',       label:'Crear/ver tareas',    icon:'✅' },
+  { key:'rendimiento',  label:'Ver rendimiento',     icon:'📈' },
+  { key:'editar',       label:'Editar registros',    icon:'✏️' },
+  { key:'eliminar',     label:'Eliminar registros',  icon:'🗑️' },
+];
+
+function openNewUser() {
+  editUserId = null;
+  document.getElementById('mu-title').textContent = 'Nuevo Usuario';
+  ['mu-nombre','mu-email','mu-pass','mu-phone','mu-cargo'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('mu-email').disabled = false;
+  document.getElementById('mu-pass-fg').style.display = '';
+  document.getElementById('mu-rol-fg').style.display = 'none';
+  document.getElementById('mu-create-note').style.display = '';
+  document.getElementById('mu-activo-chk').style.display = 'none';
+  openModal('modal-user');
+}
+
+function editUser(id) {
+  editUserId = id;
+  const u = teamProfiles.find(x => x.id === id); if (!u) return;
+  document.getElementById('mu-title').textContent = 'Editar Usuario';
+  document.getElementById('mu-nombre').value = u.nombre || '';
+  document.getElementById('mu-email').value  = u.email || '';
+  document.getElementById('mu-email').disabled = true;
+  document.getElementById('mu-phone').value  = u.phone || '';
+  document.getElementById('mu-cargo').value  = u.cargo || '';
+  document.getElementById('mu-pass-fg').style.display = 'none';
+  document.getElementById('mu-rol-fg').style.display = '';
+  document.getElementById('mu-rol').value = u.rol;
+  document.getElementById('mu-create-note').style.display = 'none';
+  document.getElementById('mu-activo-chk').style.display = '';
+  setFlag('mu-activo-chk', u.activo !== false);
+  openModal('modal-user');
+}
+
+async function saveUser() {
+  const nombre = document.getElementById('mu-nombre').value.trim();
+  const email  = document.getElementById('mu-email').value.trim();
+  const phone  = document.getElementById('mu-phone').value.trim();
+  const cargo  = document.getElementById('mu-cargo').value.trim();
+  if (!nombre || !email) { toast('⚠️ Nombre y email son obligatorios.'); return; }
+
+  if (editUserId) {
+    const rol    = document.getElementById('mu-rol').value;
+    const activo = flagOn('mu-activo-chk');
+    const { error } = await sb.from('profiles').update({ nombre, rol, cargo, phone, activo }).eq('id', editUserId);
+    if (error) { toast('❌ ' + friendlyError(error)); return; }
+    closeModal('modal-user');
+    await loadTeam();
+    renderUsers(); updateBadges();
+    toast('✅ Usuario actualizado');
+  } else {
+    const password = document.getElementById('mu-pass').value;
+    if (!password || password.length < 6) { toast('⚠️ La contraseña debe tener al menos 6 caracteres.'); return; }
+    const sbSignup = makeSignupClient();
+    const { error } = await sbSignup.auth.signUp({ email, password, options: { data: { nombre, cargo } } });
+    if (error) { toast('❌ ' + friendlyError(error)); return; }
+    closeModal('modal-user');
+    await loadTeam();
+    renderUsers(); updateBadges();
+    toast("✅ Cuenta creada con rol 'vendor'. Es posible que deba confirmar su correo antes de poder iniciar sesión. Si necesitas otro rol, edítalo en la lista de abajo.", 7000);
+  }
+}
+
+async function toggleUser(id) {
+  const u = teamProfiles.find(x => x.id === id); if (!u) return;
+  const { error } = await sb.from('profiles').update({ activo: !(u.activo !== false) }).eq('id', id);
+  if (error) { toast('❌ ' + friendlyError(error)); return; }
+  await loadTeam();
+  renderUsers();
+  toast(u.activo !== false ? '⛔ Usuario desactivado' : '✅ Usuario activado');
+}
+
+// ═══════════════════════════
+// TAREAS
+// ═══════════════════════════
+const TASK_STAGES = [
+  { id:'pendiente',  label:'Pendiente',   color:'var(--amber)',  bg:'var(--amberlt)' },
+  { id:'proceso',    label:'En proceso',  color:'var(--blue3)',  bg:'var(--bluelt)' },
+  { id:'completada', label:'Completada',  color:'var(--green)',  bg:'var(--greenlt)' },
+];
+
+const CAT_ICONS = { instalacion:'🔧', venta:'💼', soporte:'📞', admin:'📋', mantencion:'🛡️' };
+
+function renderTasks() {
+  const tasks = DB.tasks;
+  const users = teamProfiles;
+  const canEdit = true; // cliente never reaches this internal app (blocked at login)
+
+  // Filter: técnico only sees their own tasks
+  const visibleTasks = currentProfile.rol === 'tecnico'
+    ? tasks.filter(t => t.asignado === currentProfile.id)
+    : tasks;
+
+  document.getElementById('task-board').innerHTML = TASK_STAGES.map(stage => {
+    const stageTasks = visibleTasks.filter(t => t.estado === stage.id);
+    return `<div class="task-col">
+      <div class="task-col-header">
+        <span class="task-col-title" style="color:${stage.color};">${stage.label}</span>
+        <span class="task-col-count" style="background:${stage.bg};color:${stage.color};">${stageTasks.length}</span>
+      </div>
+      <div class="task-cards">
+        ${stageTasks.map(t => {
+          const assignee = users.find(u => u.id === t.asignado);
+          const role     = ROLES[assignee?.rol || 'vendor'];
+          const isOverdue = t.fecha && new Date(t.fecha+'T12:00') < new Date() && t.estado !== 'completada';
+          return `<div class="task-card">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
+              <span style="font-size:16px;">${CAT_ICONS[t.cat]||'📋'}</span>
+              <span class="tc-priority ${t.prioridad}">${t.prioridad==='high'?'Alta':t.prioridad==='mid'?'Media':'Baja'}</span>
+            </div>
+            <div class="tc-title">${esc(t.titulo)}</div>
+            <div class="tc-meta">${t.desc ? esc(t.desc.substring(0,60)+(t.desc.length>60?'...':'')) : ''}</div>
+            ${t.fecha ? `<div style="font-size:10px;color:${isOverdue?'var(--red)':'var(--ink3)'};margin-bottom:8px;">📅 ${new Date(t.fecha+'T12:00').toLocaleDateString('es-CL',{day:'numeric',month:'short'})}${isOverdue?' ⚠️ Vencida':''}</div>` : ''}
+            <div class="tc-footer">
+              <div class="tc-assigned">
+                <div style="width:20px;height:20px;border-radius:5px;background:${role.color}20;display:flex;align-items:center;justify-content:center;font-size:11px;">${esc(assignee?.nombre?.charAt(0)||'?')}</div>
+                <span>${esc(assignee?.nombre?.split(' ')[0]||'Sin asignar')}</span>
+              </div>
+              ${canEdit ? `<div style="display:flex;gap:4px;">
+                ${stage.id !== 'proceso'    ? `<button onclick="moveTask('${t.id}','${stage.id==='pendiente'?'proceso':'completada'}')" style="padding:3px 8px;background:var(--bg);border:1px solid var(--line2);border-radius:5px;font-size:10px;color:var(--ink3);cursor:pointer;">${stage.id==='pendiente'?'▶ Iniciar':'✓'}</button>` : ''}
+                ${stage.id === 'proceso'    ? `<button onclick="moveTask('${t.id}','completada')" style="padding:3px 8px;background:var(--greenlt);border:1px solid var(--green);border-radius:5px;font-size:10px;color:var(--green);cursor:pointer;">✓ Completar</button>` : ''}
+                ${stage.id === 'completada' ? `<button onclick="moveTask('${t.id}','pendiente')" style="padding:3px 8px;background:var(--bg);border:1px solid var(--line2);border-radius:5px;font-size:10px;color:var(--ink3);cursor:pointer;">↺ Reabrir</button>` : ''}
+                <button onclick="deleteTask('${t.id}')" style="padding:3px 6px;background:var(--redlt);border:none;border-radius:5px;font-size:10px;color:var(--red);cursor:pointer;">🗑</button>
+              </div>` : ''}
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+      ${canEdit ? `<button class="add-task-btn" onclick="openNewTaskStage('${stage.id}')">+ Agregar tarea</button>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function openNewTask() {
+  editTaskId = null;
+  document.getElementById('mt-title').textContent = 'Nueva Tarea';
+  ['mt-titulo','mt-desc'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('mt-fecha').value = new Date(Date.now()+7*864e5).toISOString().split('T')[0];
+  document.getElementById('mt-prioridad').value = 'mid';
+  populateAssignSelect();
+  openModal('modal-task');
+}
+
+function openNewTaskStage(estado) {
+  openNewTask();
+}
+
+function populateAssignSelect() {
+  // teamProfiles is RLS-filtered: admins see the whole team, vendor/tecnico
+  // only see their own row (profiles RLS grants full SELECT to admin only).
+  const users = teamProfiles.filter(u => u.activo !== false && u.rol !== 'cliente');
+  document.getElementById('mt-asignado').innerHTML =
+    '<option value="">Seleccionar usuario...</option>' +
+    users.map(u => {
+      const role = ROLES[u.rol] || ROLES.vendor;
+      return `<option value="${u.id}">${role.icon} ${esc(u.nombre)} (${role.label})</option>`;
+    }).join('');
+}
+
+function saveTask() {
+  const titulo   = document.getElementById('mt-titulo').value.trim();
+  const asignado = document.getElementById('mt-asignado').value;
+  if (!titulo || !asignado) { toast('⚠️ Título y asignado son obligatorios.'); return; }
+  const task = {
+    id:       editTaskId || 't'+Date.now(),
+    titulo, asignado,
+    prioridad: document.getElementById('mt-prioridad').value,
+    cat:       document.getElementById('mt-cat').value,
+    fecha:     document.getElementById('mt-fecha').value,
+    desc:      document.getElementById('mt-desc').value.trim(),
+    estado:    'pendiente',
+    created:   Date.now(),
+    createdBy: currentProfile.id,
+  };
+  const tasks = DB.tasks;
+  if (editTaskId) { const i = tasks.findIndex(t=>t.id===editTaskId); if(i>-1) tasks[i]={...tasks[i],...task,estado:tasks[i].estado}; }
+  else tasks.push(task);
+  DB.save('tasks', tasks);
+  closeModal('modal-task');
+  renderTasks(); updateBadges();
+  toast('✅ Tarea creada');
+}
+
+function moveTask(id, newState) {
+  const tasks = DB.tasks;
+  const i     = tasks.findIndex(t => t.id === id);
+  if (i > -1) { tasks[i].estado = newState; if(newState==='completada') tasks[i].completedAt=Date.now(); }
+  DB.save('tasks', tasks);
+  renderTasks(); updateBadges();
+  // Register performance
+  if (newState === 'completada') {
+    const perf = DB.perf;
+    const uid  = tasks[i].asignado;
+    if (!perf[uid]) perf[uid] = { completed:0, points:0 };
+    perf[uid].completed++;
+    perf[uid].points += tasks[i].prioridad==='high'?3:tasks[i].prioridad==='mid'?2:1;
+    DB.save('perf', perf);
+  }
+  toast(newState==='completada'?'✅ Tarea completada':'↺ Tarea reactivada');
+}
+
+function deleteTask(id) {
+  if (!confirm('¿Eliminar esta tarea?')) return;
+  DB.save('tasks', DB.tasks.filter(t=>t.id!==id));
+  renderTasks(); updateBadges(); toast('🗑 Tarea eliminada');
+}
+
+// ═══════════════════════════
+// RENDIMIENTO
+// ═══════════════════════════
+function renderRendimiento() {
+  const users = teamProfiles.filter(u => u.rol !== 'cliente');
+  const tasks = DB.tasks;
+  const perf  = DB.perf;
+
+  const rows = users.map(u => {
+    const role       = ROLES[u.rol] || ROLES.vendor;
+    const total      = tasks.filter(t => t.asignado === u.id).length;
+    const done       = tasks.filter(t => t.asignado === u.id && t.estado === 'completada').length;
+    const pending    = tasks.filter(t => t.asignado === u.id && t.estado === 'pendiente').length;
+    const inProgress = tasks.filter(t => t.asignado === u.id && t.estado === 'proceso').length;
+    const overdue    = tasks.filter(t => t.asignado === u.id && t.fecha && new Date(t.fecha+'T12:00')<new Date() && t.estado!=='completada').length;
+    const points     = perf[u.id]?.points || 0;
+    const pct        = total ? Math.round(done/total*100) : 0;
+    return { u, role, total, done, pending, inProgress, overdue, points, pct };
+  }).sort((a,b) => b.points - a.points);
+
+  const maxPoints = Math.max(...rows.map(r=>r.points), 1);
+
+  document.getElementById('rendimiento-content').innerHTML = `
+    <div class="stats-row" style="margin-bottom:20px;">
+      <div class="stat-mini blue"><div class="sm-label">Total tareas</div><div class="sm-val">${tasks.length}</div><div class="sm-sub">en el sistema</div></div>
+      <div class="stat-mini green"><div class="sm-label">Completadas</div><div class="sm-val">${tasks.filter(t=>t.estado==='completada').length}</div><div class="sm-sub">${tasks.length?Math.round(tasks.filter(t=>t.estado==='completada').length/tasks.length*100):0}% del total</div></div>
+      <div class="stat-mini amber"><div class="sm-label">En proceso</div><div class="sm-val">${tasks.filter(t=>t.estado==='proceso').length}</div></div>
+      <div class="stat-mini purple"><div class="sm-label">Vencidas</div><div class="sm-val" style="color:var(--red);">${tasks.filter(t=>t.fecha&&new Date(t.fecha+'T12:00')<new Date()&&t.estado!=='completada').length}</div></div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-header"><div class="table-title">Ranking del equipo</div><div style="font-size:11px;color:var(--ink3);">Ordenado por puntos — Alta=3pts · Media=2pts · Baja=1pt</div></div>
+      <table class="dt" id="tbl-rendimiento">
+        <thead><tr><th>#</th><th>Usuario</th><th>Rol</th><th>Tareas</th><th>Completadas</th><th>Vencidas</th><th>% Éxito</th><th>Puntos</th></tr></thead>
+        <tbody>
+          ${rows.map((r, i) => `<tr>
+            <td style="font-family:var(--fd);font-size:16px;font-weight:800;color:${i===0?'var(--amber)':i===1?'var(--ink3)':i===2?'var(--amber)':'var(--ink3)'};">${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</td>
+            <td><div style="display:flex;align-items:center;gap:10px;">
+              <div class="u-avatar" style="background:${r.role.color}20;color:${r.role.color};">${esc(r.u.nombre?.charAt(0)||'?')}</div>
+              <div><div style="font-weight:600;color:var(--ink);">${esc(r.u.nombre||'(Sin nombre)')}</div><div style="font-size:11px;color:var(--ink3);">${esc(r.u.email||'')}</div></div>
+            </div></td>
+            <td><span class="badge ${r.role.badge}">${r.role.icon} ${r.role.label}</span></td>
+            <td style="text-align:center;font-weight:600;">${r.total}</td>
+            <td style="text-align:center;color:var(--green);font-weight:600;">${r.done}</td>
+            <td style="text-align:center;color:${r.overdue>0?'var(--red)':'var(--ink3)'};font-weight:${r.overdue>0?700:400};">${r.overdue || '—'}</td>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div class="perf-bar-bg" style="width:80px;"><div class="perf-bar-fill" style="width:${r.pct}%;background:${r.pct>70?'var(--green)':r.pct>40?'var(--amber)':'var(--red)'};"></div></div>
+                <span style="font-size:12px;font-weight:700;color:var(--ink);">${r.pct}%</span>
+              </div>
+            </td>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div class="perf-bar-bg" style="width:60px;"><div class="perf-bar-fill" style="width:${r.points/maxPoints*100}%;background:var(--purple);"></div></div>
+                <span style="font-family:var(--fd);font-size:14px;font-weight:800;color:var(--purple);">${r.points}</span>
+              </div>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Detalle por usuario -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:16px;">
+      ${rows.map(r => `<div class="table-card" style="overflow:hidden;">
+        <div style="padding:16px;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center;">
+          <div class="u-avatar" style="background:${r.role.color}20;color:${r.role.color};width:40px;height:40px;font-size:16px;">${esc(r.u.nombre?.charAt(0)||'?')}</div>
+          <div>
+            <div style="font-weight:700;color:var(--ink);font-size:14px;">${esc((r.u.nombre||'(Sin nombre)').split(' ')[0])}</div>
+            <span class="badge ${r.role.badge}" style="font-size:9px;">${r.role.icon} ${r.role.label}</span>
+          </div>
+          <div style="margin-left:auto;font-family:var(--fd);font-size:20px;font-weight:800;color:var(--purple);">${r.points}pts</div>
+        </div>
+        <div style="padding:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div style="text-align:center;"><div style="font-family:var(--fd);font-size:20px;font-weight:800;color:var(--ink);">${r.done}</div><div style="font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:1px;">completadas</div></div>
+          <div style="text-align:center;"><div style="font-family:var(--fd);font-size:20px;font-weight:800;color:var(--amber);">${r.pending}</div><div style="font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:1px;">pendientes</div></div>
+        </div>
+        ${r.overdue > 0 ? `<div style="padding:8px 14px;background:var(--redlt);font-size:11px;color:var(--red);font-weight:600;">⚠️ ${r.overdue} tarea${r.overdue>1?'s':''} vencida${r.overdue>1?'s':''}</div>` : ''}
+      </div>`).join('')}
+    </div>
+  `;
+}
+
+// ═══════════════════════════
+// ROLES VIEW
+// ═══════════════════════════
+function renderRoles() {
+  const COLORS_MAP = { admin:'var(--purple)', vendor:'var(--blue3)', tecnico:'var(--amber)', cliente:'var(--cyan)' };
+
+  document.getElementById('roles-grid').innerHTML = Object.entries(ROLES).map(([key, role]) => {
+    const userCount = teamProfiles.filter(u=>u.rol===key).length;
+    const permCount = Object.values(role.perms).filter(Boolean).length;
+    return `<div class="role-card" style="border-top:3px solid ${role.color};">
+      <div class="role-icon">${role.icon}</div>
+      <div class="role-name" style="color:${role.color};">${role.label}</div>
+      <div class="role-desc">${
+        key==='admin'  ?'Acceso total al sistema. Gestiona usuarios, ve todas las métricas y puede eliminar registros.':
+        key==='vendor' ?'Gestiona clientes, pipeline y cotizaciones. No puede administrar usuarios ni ver rendimiento de otros.':
+        key==='tecnico'?'Acceso a sus tareas asignadas y seguimiento WA de clientes. Sin acceso al pipeline ni dashboard.':
+                        'Solo puede ver su información de servicio. Sin acceso a datos internos de ZYGOS.'
+      }</div>
+      <div style="font-family:var(--fd);font-size:11px;color:var(--ink3);margin-bottom:4px;">${userCount} usuario${userCount!==1?'s':''} · ${permCount}/10 permisos</div>
+      <div class="role-perms">
+        ${Object.entries(role.perms).map(([pk,pv]) => `<div class="perm-item ${pv?'yes':'no'}">${pv?'✓':'✗'} ${PERMS_LABELS[pk]}</div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+
+  // Matrix
+  document.getElementById('perms-matrix').innerHTML = `
+    <thead><tr>
+      <th>Permiso</th>
+      ${Object.entries(ROLES).map(([k,r])=>`<th style="text-align:center;">${r.icon} ${r.label}</th>`).join('')}
+    </tr></thead>
+    <tbody>
+      ${ALL_PERMS.map(p=>`<tr>
+        <td><span style="font-size:14px;margin-right:6px;">${p.icon}</span>${p.label}</td>
+        ${Object.entries(ROLES).map(([k,r])=>`<td style="text-align:center;font-size:16px;">${r.perms[p.key]?'<span style="color:var(--green);">✓</span>':'<span style="color:var(--red);opacity:.4;">✗</span>'}</td>`).join('')}
+      </tr>`).join('')}
+    </tbody>`;
+}
+
+// ═══════════════════════════
+// CATÁLOGO (productos y servicios)
+// ═══════════════════════════
+const CATEGORIA_LABELS = { fitness:'🏋️ Fitness', edificio:'🏢 Edificio', software:'💻 Software', otro:'📦 Otro' };
+
+async function loadCatalog() {
+  const [{ data: products, error: pErr }, { data: services, error: sErr }] = await Promise.all([
+    sb.from('products').select('*').order('orden', { ascending: true }),
+    sb.from('services').select('*').order('orden', { ascending: true }),
+  ]);
+  if (pErr) { console.error(pErr); toast('❌ No se pudo cargar productos: ' + friendlyError(pErr)); }
+  if (sErr) { console.error(sErr); toast('❌ No se pudo cargar servicios: ' + friendlyError(sErr)); }
+  PRODUCTS = products || [];
+  SERVICES = services || [];
+}
+
+function renderCatalog() {
+  const canWrite  = currentProfile.rol === 'admin' || currentProfile.rol === 'vendor';
+  const canDelete = currentProfile.rol === 'admin';
+
+  const actionsP = document.getElementById('actions-productos');
+  const actionsS = document.getElementById('actions-servicios');
+  if (actionsP) actionsP.innerHTML = canWrite ? `<button class="btn btn-primary btn-sm" onclick="openNewProduct()">+ Nuevo Producto</button>` : '';
+  if (actionsS) actionsS.innerHTML = canWrite ? `<button class="btn btn-primary btn-sm" onclick="openNewService()">+ Nuevo Servicio</button>` : '';
+
+  document.getElementById('products-table').innerHTML = PRODUCTS.length ? PRODUCTS.map(p => `<tr>
+      <td>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="u-avatar" style="background:rgba(74,114,255,.12);color:var(--blue3);font-size:16px;">${esc(p.icono||'🔐')}</div>
+          <div>
+            <div class="td-name">${esc(p.nombre)}${p.destacado ? ' <span style="color:var(--amber);">★</span>' : ''}${p.mostrar_en_web ? ' <span title="Visible en zygos.cl">🌐</span>' : ''}</div>
+            <div style="font-size:11px;color:var(--ink3);">${esc(p.sku||'—')}</div>
+          </div>
+        </div>
+      </td>
+      <td>${CATEGORIA_LABELS[p.categoria]||esc(p.categoria||'—')}</td>
+      <td style="font-weight:600;color:var(--ink);">$${Number(p.precio_clp||0).toLocaleString('es-CL')} <span style="color:var(--ink3);font-weight:400;">/ ${esc(p.unidad||'unidad')}</span></td>
+      <td><span class="badge ${p.activo!==false?'badge-active':'badge-inactive'}">${p.activo!==false?'● Activo':'○ Inactivo'}</span></td>
+      <td>
+        <div style="display:flex;gap:6px;">
+          ${canWrite ? `<button class="btn btn-ghost btn-sm" onclick="editProduct('${p.id}')">✏️ Editar</button>` : ''}
+          ${canDelete ? `<button class="btn btn-danger btn-sm" onclick="deleteProduct('${p.id}')">🗑</button>` : ''}
+          ${!canWrite && !canDelete ? '—' : ''}
+        </div>
+      </td>
+    </tr>`).join('') : `<tr><td colspan="5" style="text-align:center;color:var(--ink3);padding:24px;">Sin productos registrados.</td></tr>`;
+
+  document.getElementById('services-table').innerHTML = SERVICES.length ? SERVICES.map(s => `<tr>
+      <td>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="u-avatar" style="background:rgba(16,185,129,.12);color:var(--green);font-size:16px;">${esc(s.icono||'🔧')}</div>
+          <div class="td-name">${esc(s.nombre)}${s.mostrar_en_web ? ' <span title="Visible en zygos.cl">🌐</span>' : ''}</div>
+        </div>
+      </td>
+      <td style="font-weight:600;color:var(--ink);">$${Number(s.precio_clp||0).toLocaleString('es-CL')}</td>
+      <td><span class="badge ${s.activo!==false?'badge-active':'badge-inactive'}">${s.activo!==false?'● Activo':'○ Inactivo'}</span></td>
+      <td>
+        <div style="display:flex;gap:6px;">
+          ${canWrite ? `<button class="btn btn-ghost btn-sm" onclick="editService('${s.id}')">✏️ Editar</button>` : ''}
+          ${canDelete ? `<button class="btn btn-danger btn-sm" onclick="deleteService('${s.id}')">🗑</button>` : ''}
+          ${!canWrite && !canDelete ? '—' : ''}
+        </div>
+      </td>
+    </tr>`).join('') : `<tr><td colspan="4" style="text-align:center;color:var(--ink3);padding:24px;">Sin servicios registrados.</td></tr>`;
+}
+
+function openNewProduct() {
+  editProductId = null;
+  document.getElementById('mp-title').textContent = 'Nuevo Producto';
+  ['mp-nombre','mp-sku','mp-icono','mp-precio','mp-unidad','mp-desc','mp-orden','mp-tags','mp-descweb','mp-carac'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('mp-categoria').value = 'otro';
+  document.getElementById('mp-badge').value = '';
+  setFlag('mp-activo-chk', true);
+  setFlag('mp-destacado-chk', false);
+  setFlag('mp-web-chk', false);
+  setFlag('mp-precioweb-chk', false);
+  setFotoPreview('mp', '');
+  openModal('modal-product');
+}
+
+function editProduct(id) {
+  const p = PRODUCTS.find(x => x.id === id); if (!p) return;
+  editProductId = id;
+  document.getElementById('mp-title').textContent = 'Editar Producto';
+  document.getElementById('mp-nombre').value    = p.nombre || '';
+  document.getElementById('mp-sku').value       = p.sku || '';
+  document.getElementById('mp-categoria').value = p.categoria || 'otro';
+  document.getElementById('mp-icono').value     = p.icono || '';
+  document.getElementById('mp-precio').value    = p.precio_clp ?? '';
+  document.getElementById('mp-unidad').value    = p.unidad || '';
+  document.getElementById('mp-desc').value      = p.descripcion || '';
+  document.getElementById('mp-orden').value     = p.orden ?? '';
+  document.getElementById('mp-badge').value     = p.badge || '';
+  document.getElementById('mp-tags').value      = (p.tags_web || []).join(', ');
+  document.getElementById('mp-descweb').value   = p.descripcion_web || '';
+  document.getElementById('mp-carac').value     = (p.caracteristicas || []).join('\n');
+  setFlag('mp-activo-chk', p.activo !== false);
+  setFlag('mp-destacado-chk', !!p.destacado);
+  setFlag('mp-web-chk', !!p.mostrar_en_web);
+  setFlag('mp-precioweb-chk', !!p.mostrar_precio);
+  setFotoPreview('mp', p.imagen_url || '');
+  openModal('modal-product');
+}
+
+async function saveProduct() {
+  const nombre = document.getElementById('mp-nombre').value.trim();
+  const precio = parseInt(document.getElementById('mp-precio').value, 10);
+  if (!nombre) { toast('⚠️ El nombre es obligatorio.'); return; }
+  if (isNaN(precio) || precio < 0) { toast('⚠️ Ingresa un precio válido (CLP).'); return; }
+  const payload = {
+    nombre,
+    sku:         document.getElementById('mp-sku').value.trim() || null,
+    categoria:   document.getElementById('mp-categoria').value,
+    icono:       document.getElementById('mp-icono').value.trim() || '🔐',
+    precio_clp:  precio,
+    unidad:      document.getElementById('mp-unidad').value.trim() || 'unidad',
+    descripcion: document.getElementById('mp-desc').value.trim() || null,
+    orden:       parseInt(document.getElementById('mp-orden').value, 10) || 0,
+    activo:      flagOn('mp-activo-chk'),
+    destacado:   flagOn('mp-destacado-chk'),
+    mostrar_en_web:  flagOn('mp-web-chk'),
+    mostrar_precio:  flagOn('mp-precioweb-chk'),
+    badge:           document.getElementById('mp-badge').value || null,
+    tags_web:        document.getElementById('mp-tags').value.split(',').map(t => t.trim()).filter(Boolean),
+    descripcion_web: document.getElementById('mp-descweb').value.trim() || null,
+    caracteristicas: document.getElementById('mp-carac').value.split('\n').map(t => t.trim()).filter(Boolean),
+    imagen_url:      document.getElementById('mp-imagen-url').value || null,
+  };
+  const { error } = editProductId
+    ? await sb.from('products').update(payload).eq('id', editProductId)
+    : await sb.from('products').insert(payload);
+  if (error) { toast('❌ ' + friendlyError(error)); return; }
+  closeModal('modal-product');
+  await loadCatalog();
+  renderCatalog();
+  toast(editProductId ? '✅ Producto actualizado' : '✅ Producto creado');
+}
+
+async function deleteProduct(id) {
+  if (!confirm('¿Eliminar este producto? Esta acción no se puede deshacer.')) return;
+  const { error } = await sb.from('products').delete().eq('id', id);
+  if (error) { toast('❌ ' + friendlyError(error)); return; }
+  await loadCatalog();
+  renderCatalog();
+  toast('🗑 Producto eliminado');
+}
+
+function openNewService() {
+  editServiceId = null;
+  document.getElementById('ms-title').textContent = 'Nuevo Servicio';
+  ['ms-nombre','ms-icono','ms-precio','ms-desc','ms-orden','ms-tags','ms-descweb','ms-carac'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('ms-badge').value = '';
+  setFlag('ms-activo-chk', true);
+  setFlag('ms-web-chk', false);
+  setFlag('ms-precioweb-chk', false);
+  setFotoPreview('ms', '');
+  openModal('modal-service');
+}
+
+function editService(id) {
+  const s = SERVICES.find(x => x.id === id); if (!s) return;
+  editServiceId = id;
+  document.getElementById('ms-title').textContent = 'Editar Servicio';
+  document.getElementById('ms-nombre').value = s.nombre || '';
+  document.getElementById('ms-icono').value  = s.icono || '';
+  document.getElementById('ms-precio').value = s.precio_clp ?? '';
+  document.getElementById('ms-desc').value   = s.descripcion || '';
+  document.getElementById('ms-orden').value  = s.orden ?? '';
+  document.getElementById('ms-badge').value  = s.badge || '';
+  document.getElementById('ms-tags').value   = (s.tags_web || []).join(', ');
+  document.getElementById('ms-descweb').value = s.descripcion_web || '';
+  document.getElementById('ms-carac').value  = (s.caracteristicas || []).join('\n');
+  setFlag('ms-activo-chk', s.activo !== false);
+  setFlag('ms-web-chk', !!s.mostrar_en_web);
+  setFlag('ms-precioweb-chk', !!s.mostrar_precio);
+  setFotoPreview('ms', s.imagen_url || '');
+  openModal('modal-service');
+}
+
+async function saveService() {
+  const nombre = document.getElementById('ms-nombre').value.trim();
+  const precioRaw = document.getElementById('ms-precio').value;
+  const precio = precioRaw === '' ? 0 : parseInt(precioRaw, 10);
+  if (!nombre) { toast('⚠️ El nombre es obligatorio.'); return; }
+  if (isNaN(precio) || precio < 0) { toast('⚠️ Ingresa un precio válido (CLP).'); return; }
+  const payload = {
+    nombre,
+    icono:       document.getElementById('ms-icono').value.trim() || '🔧',
+    precio_clp:  precio,
+    descripcion: document.getElementById('ms-desc').value.trim() || null,
+    orden:       parseInt(document.getElementById('ms-orden').value, 10) || 0,
+    activo:      flagOn('ms-activo-chk'),
+    mostrar_en_web:  flagOn('ms-web-chk'),
+    mostrar_precio:  flagOn('ms-precioweb-chk'),
+    badge:           document.getElementById('ms-badge').value || null,
+    tags_web:        document.getElementById('ms-tags').value.split(',').map(t => t.trim()).filter(Boolean),
+    descripcion_web: document.getElementById('ms-descweb').value.trim() || null,
+    caracteristicas: document.getElementById('ms-carac').value.split('\n').map(t => t.trim()).filter(Boolean),
+    imagen_url:      document.getElementById('ms-imagen-url').value || null,
+  };
+  const { error } = editServiceId
+    ? await sb.from('services').update(payload).eq('id', editServiceId)
+    : await sb.from('services').insert(payload);
+  if (error) { toast('❌ ' + friendlyError(error)); return; }
+  closeModal('modal-service');
+  await loadCatalog();
+  renderCatalog();
+  toast(editServiceId ? '✅ Servicio actualizado' : '✅ Servicio creado');
+}
+
+async function deleteService(id) {
+  if (!confirm('¿Eliminar este servicio? Esta acción no se puede deshacer.')) return;
+  const { error } = await sb.from('services').delete().eq('id', id);
+  if (error) { toast('❌ ' + friendlyError(error)); return; }
+  await loadCatalog();
+  renderCatalog();
+  toast('🗑 Servicio eliminado');
+}
+
+// ═══════════════════════════
+// MODAL HELPERS
+// ═══════════════════════════
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id){
+  document.getElementById(id).classList.remove('open');
+  editUserId=null; editTaskId=null; editProductId=null; editServiceId=null;
+}
+
+// ═══════════════════════════
+// UTILS
+// ═══════════════════════════
+function toast(msg, duration){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.style.transform='translateX(-50%) translateY(0)';
+  setTimeout(()=>t.style.transform='translateX(-50%) translateY(60px)', duration || 2800);
+}
+
+// ═══════════════════════════
+// INIT — check session
+// ═══════════════════════════
+document.addEventListener('DOMContentLoaded', async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    const ok = await loadProfileAndEnter(session.user, true);
+    if (ok) return;
+  }
+  // Show login
+  document.getElementById('app-shell').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+});
+
+function setMobileActive(id){
+  document.querySelectorAll('.mobile-nav-item').forEach(i=>i.classList.remove('active'));
+  const el=document.getElementById(id); if(el) el.classList.add('active');
+  // Update FAB target based on view
+  const fabMap={'mn-usuarios':'openNewUser()','mn-tareas':'openNewTask()','mn-catalogo':'openNewProduct()'};
+  const fab=document.getElementById('fab-btn');
+  if(fab) fab.onclick=()=>{ const fn=fabMap[id]; if(fn) eval(fn); };
+}
+
+</script>
+
+<!-- MOBILE NAV -->
+<nav class="mobile-nav" id="mobile-nav">
+  <div class="mobile-nav-item active" id="mn-usuarios" onclick="showView('usuarios');setMobileActive('mn-usuarios')">
+    <span class="mn-icon">👥</span>Usuarios
+  </div>
+  <div class="mobile-nav-item" id="mn-catalogo" onclick="showView('catalogo');setMobileActive('mn-catalogo')">
+    <span class="mn-icon">🛒</span>Catálogo
+  </div>
+  <div class="mobile-nav-item" id="mn-sitioweb" onclick="showView('sitioweb');setMobileActive('mn-sitioweb')">
+    <span class="mn-icon">🌐</span>Sitio
+  </div>
+  <div class="mobile-nav-item" id="mn-tareas" onclick="showView('tareas');setMobileActive('mn-tareas')">
+    <span class="mn-icon">✅</span>Tareas
+  </div>
+  <div class="mobile-nav-item" id="mn-rendimiento" onclick="showView('rendimiento');setMobileActive('mn-rendimiento')">
+    <span class="mn-icon">📊</span>Métricas
+  </div>
+  <div class="mobile-nav-item" id="mn-roles" onclick="showView('roles');setMobileActive('mn-roles')">
+    <span class="mn-icon">🔐</span>Roles
+  </div>
+  <div class="mobile-nav-item" id="mn-crm" onclick="openCRM()">
+    <span class="mn-icon">🏢</span>CRM
+  </div>
+</nav>
+<button class="fab" id="fab-btn" onclick="document.getElementById('fab-modal-usuarios').click()">+</button>
+<button id="fab-modal-usuarios" style="display:none" onclick="openNewUser()"></button>
+
+</body>
+</html>
